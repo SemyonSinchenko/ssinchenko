@@ -1,0 +1,12 @@
+[submodule "themes/ananke"]
+	path = themes/ananke
+	url = https://github.com/theNewDynamic/gohugo-theme-ananke
+[submodule "themes/ficurinia"]
+	path = themes/ficurinia
+	url = https://gitlab.com/gabmus/hugo-ficurinia
+[submodule "themes/hugo-theme-gruvbox"]
+	path = themes/hugo-theme-gruvbox
+	url = https://github.com/schnerring/hugo-theme-gruvbox
+[submodule "themes/beautifulhugo"]
+	path = themes/beautifulhugo
+	url = https://github.com/halogenica/beautifulhugo.git
