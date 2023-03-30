@@ -120,7 +120,7 @@ Numeric modeling of X-Ray Powder Diffraction.
 
 ### Codewars
 
-**Languages:**
+**Most trained languages:**
 
 1. Scala
 2. Python
