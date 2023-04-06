@@ -43,6 +43,10 @@ So all that you need to do is to install these libraries.
 
 ** Choose a right prompt
 
+#+begin_quote
+It may be important that by default =codegpt= library uses =temperature=1.0=. I tried also to use =temperature=0.0= but it changed nothing.
+#+end_quote
+
 By default =codegpt= library provide [[https://github.com/emacs-openai/codegpt/blob/master/codegpt.el#L211-L220][the function]] for generating documentation to any code:
 
 #+begin_src emacs-lisp
@@ -95,11 +99,10 @@ list of elements corresponding to the values in the column.
 
 .. note::
     This is an example of reStructuredText (reST) syntax.
-
 """
 #+end_src
 
-Here we are a good docstring but with a couple of problems:
+Here we have a good docstring but with a couple of problems:
 - additional line on the top;
 - a very-very strange =note= which is also not supported by =MKDocs= generator;
 - typo: _functionS_ instead of _function_.
@@ -154,7 +157,7 @@ Sometimes **LLM** started to dream out of the blue. For example once it returns 
 
 ** Conclusion
 
-**LLM** looks very promising in such a common task like generation documentation to the existing code. But even simple docs requires a careful control from the human side.
+**LLM** looks very promising in such a common task like generation documentation to the existing code. But even simple docs requires a careful control from the human side. Anyway I will use it in my projects because it is significantly better than write documentation from scratch by yourself. I do not think that =LLV= models can replace software developers in the nearest feature but I think that they will change the whole process of development and will become as much an integral part of development as, for example, IDEs have become.
 
 
 P.S. I spend about 0.20 USD on **LLM** calls and about 30 minutes to setup all the configuration and generate all the docstrings. I'm absolutely sure that manual generation of docs would require significantly bigger amount of time!
