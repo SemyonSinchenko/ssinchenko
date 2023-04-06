@@ -110,9 +110,13 @@ But it can be easily done by just copying only required part of the text and fix
 
 For big complex functions, it works even worse. The first couple of tries returns me a picture like this one:
 
-#+attr_html: alt: Alternative text title: Example of return in the wrong format :width 800
-#+CAPTION:
-[[/llm_docstrings/bad-docstring-1.png]]
+#+BEGIN_CENTER
+#+ATTR_HTML: :alt Example of return in the wrong format
+#+ATTR_HTML: :title Example of return in the wrong format
+#+ATTR_HTML: :width 750px
+#+CAPTION: *Example of return in the wrong format*
+[[file:/llm-docs-bad-docstring-1.png]]
+#+END_CENTER
 
 So even two explicit directives to use =reStructuredText= and =sphinx= are not enough sometimes.
 
@@ -152,9 +156,13 @@ There are some problems like a wrong order of parameters and description blocks 
 
 Sometimes **LLM** started to dream out of the blue. For example once it returns me docstrings with notes about changes in interface. The most interesting thing is that such a changelog looked very believable, despite being fictional from start to finish!
 
-#+attr_html: alt: Alternative text title: Fictional changelog :width 800
-#+CAPTION:
-[[/llm_docstrings/fictional-changelog.png]]
+#+BEGIN_CENTER
+#+ATTR_HTML: :alt Fictional changelog
+#+ATTR_HTML: :title Fictional chagelog
+#+ATTR_HTML: :width 500px
+#+CAPTION: *Finctional changelog example*
+[[file:/llm-docs-fictional-changelog.png]]
+#+END_CENTER
 
 ** Conclusion
 
