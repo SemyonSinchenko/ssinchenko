@@ -10,7 +10,7 @@
 
 ** Motivation
 
-There is an [[https://github.com/MrPowers/quinn][open source library]] in which I'm a maintainer. And recently I committed to creating docstrings for all the public functions and methods. I heard that recent **Large Language Models** (**LLM**) are good enough in the annotation of texts and documenting of code so I decided to try to use one of OpenAI models to solve this problem. In this post I will use =Emacs= plugins and extensions to generate docstrings but most advise about which prompt is better to use are generic and may be used with different code editors and IDE's.
+There is an [[https://github.com/MrPowers/quinn][open source library]] in which I'm a maintainer. And recently I committed to creating docstrings for all the public functions and methods. I heard that recent **Large Language Models** (**LLM**) are good enough in the annotation of texts and documenting of code so I decided to try to use one of OpenAI models to solve this problem. In this post I will use =Emacs= plugins and extensions to generate docstrings but most advises about which prompt is better to use are generic and may be used with different code editors and IDE's.
 
 ** Setup Eamcs and GPT
 
@@ -72,7 +72,7 @@ But this function is designed to generate documentation for any language. The pr
      start end))
 #+end_src
 
-It is highly recommended to add as much as possible mentions of desired docstrings format. As you will see later even twice directives to provide =reStructuredText= style docstrings are not enough and sometimes GPT returns something strange...
+It is highly recommended to add as much as possible mentions of desired docstrings format. As you will see later even doubled directives to provide =reStructuredText= style docstrings are not enough and sometimes GPT returns something strange...
 
 ** Docstring for a simple function
 
@@ -157,7 +157,7 @@ Sometimes **LLM** started to dream out of the blue. For example once it returns 
 
 ** Conclusion
 
-**LLM** looks very promising in such a common task like generation documentation to the existing code. But even simple docs requires a careful control from the human side. Anyway I will use it in my projects because it is significantly better than write documentation from scratch by yourself. I do not think that =LLV= models can replace software developers in the nearest feature but I think that they will change the whole process of development and will become as much an integral part of development as, for example, IDEs have become.
+**LLM** looks very promising in such a common task like as generating documentation for the existing code. But even simple docs requires a careful control from the human side. Anyway I will use it in my projects because it is significantly better than write documentation from scratch by yourself. I do not think that =LLV= models can replace software developers in the nearest feature but I think that they will change the whole process of development and will become as much an integral part of development as, for example, IDEs have become.
 
 
 P.S. I spend about 0.20 USD on **LLM** calls and about 30 minutes to setup all the configuration and generate all the docstrings. I'm absolutely sure that manual generation of docs would require significantly bigger amount of time!
