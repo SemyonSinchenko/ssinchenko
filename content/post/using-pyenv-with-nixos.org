@@ -1,0 +1,83 @@
+#+title: Using Pyenv with NixOS
+#+date: 2023-09-29T17:29:05+02:00
+#+draft: false
+#+categories[]: nixos
+#+tags[]: python, nixos
+#+author: Sem Sinchenko
+#+toc: true
+
+* The problem
+
+Recently I decided to switch from Ubuntu to [[https://nixos.org/][NixOS]]. Do not ask me why, it was just for fun mostly. One of the main ideas behind NixOS is to separation of dependencies: each new package is installed into separate sandbox with own scope of dependencies. By design it should make system significantly more stable but sometimes there are problems. One of such problems I faced with =pyenv= -- a tool for simplifying python versions management.
+
+* Adding pyenv to your NixOS configuration
+
+The simplest way to install =pyenv= in NixOS is to add the following lines to your =/etc/nixos/configuration.nix=:
+
+#+BEGIN_SRC nix
+  { config, pkgs, ... }:
+
+  let
+    unstableTarball = fetchTarball
+      "https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz";
+  in {
+    ...
+
+    nixpkgs.config = {
+      allowUnfree = true;
+      packageOverrides = pkgs:
+        with pkgs; {
+          unstable = import unstableTarball { config = config.nixpkgs.config; };
+        };
+    };
+
+  environment.systemPackages = with pkgs; [
+    pkgs.gcc
+    pkgs.gnumake
+    pkgs.zlib
+    pkgs.libffi
+    pkgs.readline
+    pkgs.bzip2
+    pkgs.openssl
+    pkgs.ncurses
+    unstable.pyenv
+  ];
+
+  }
+#+END_SRC
+
+Here we do the following:
+
+1. Add a link to unstable channel of nix packages;
+2. Defina an additional source and name it =unstable=
+3. Add =zlib, libffi, readline, bzip2, openssl, ncurses= because we need them to build =Python=
+4. Add =unstable.pyenv= to install the latest available version of =Pyenv=
+
+* Trying pyenv and getting an error...
+
+After =sudo nixos-rebuild switch= you will be able to try =pyenv install python3.10= but most probably you immediatly gen an error like this one:
+
+#+BEGIN_SRC bash
+zipimport.ZipImportError: can't decompress data; zlib not available
+#+END_SRC
+
+It may looks strange because we installed =zlib= but the root of this problem is in the main benefit of NixOS: zlib =.h= and =.so= files are installed into container and gcc cannot find them when trying to build =Python=.
+
+* Magic that works for me
+
+Maybe it is not the right way but it worked for me. We need to spicefy additional libraries and search path for headers via environment variables. Because =NixOS= install libraries in paths that contains hashes there is no unified and constant place like =/usr/lib= that may be hardcoded. Because of this I added the following lines into my =configuration.nix=:
+
+#+BEGIN_SRC nix
+  environment.sessionVariables = {
+    PYENV_ROOT="$HOME/.pyenv";
+    # pyenv flags to be able to install Python
+    CPPFLAGS="-I${pkgs.zlib.dev}/include -I${pkgs.libffi.dev}/include -I${pkgs.readline.dev}/include -I${pkgs.bzip2.dev}/include -I${pkgs.openssl.dev}/include";
+    CXXFLAGS="-I${pkgs.zlib.dev}/include -I${pkgs.libffi.dev}/include -I${pkgs.readline.dev}/include -I${pkgs.bzip2.dev}/include -I${pkgs.openssl.dev}/include";
+    CFLAGS="-I${pkgs.openssl.dev}/include";
+    LDFLAGS="-L${pkgs.zlib.out}/lib -L${pkgs.libffi.out}/lib -L${pkgs.readline.out}/lib -L${pkgs.bzip2.out}/lib -L${pkgs.openssl.out}/lib";
+    CONFIGURE_OPTS="-with-openssl=${pkgs.openssl.dev}/include";
+    PYENV_VIRTUALENV_DISABLE_PROMPT="1";
+  };
+#+END_SRC
+
+In this case we are spicifying all the paths and also directly point to =OpenSSL= installation. After that =pyenv install= start working correctly. I spent a lot of time trying to find a right way to specify this variables, so I hope my short post may safe this time for someone else!
