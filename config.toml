@@ -48,6 +48,8 @@ staticDir = ["static"]
   email = "ssinchenko@protonmail.com"
   github = "SemyonSinchenko"
   linkedin = "semyon-a-sinchenko"
+  strava = "123306719"
+  mastodon = "pixelfed.social/i/web/profile/391519829850111071"
 
 [[menu.main]]
     name = "Blog"
