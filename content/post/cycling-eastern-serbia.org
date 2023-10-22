@@ -1,11 +1,25 @@
-#+title: Cycling Eastern Serbia
-#+date: 2023-10-12T09:45:05+02:00
-#+draft: false
-#+categories[]: bikepacking
-#+tags[]: serbia, cycling, bikepacking
-#+author: Sem Sinchenko
-#+toc: true
-#+header: 
+---
+title: Cycling Eastern Serbia
+date: 2023-10-12T09:45:05+02:00
+draft: false
+categories:
+  - bikepacking
+tags:
+  - serbia
+  - cycling
+  - bikepacking
+author: "Sem Sinchenko"
+toc: true
+images: 
+  - "/ssinchenko/images/eastern_serbia/DSC01498.jpg"
+bigimg:
+  - src: "/ssinchenko/images/eastern_serbia/DSC01338_mrgd.jpg"
+    desc: ""
+include_toc: true
+summary: I would like to tell you about my bicycle trip through Eastern Serbia. This part of the world is beautiful, but there is a big problem with lack of information in English. So I will try to fill this gap. The route I will describe starts in Belgrade, goes along the Danube River, through Djerdap National Park to the border with Serbia, and returns to Belgrade through Kucaj-Beljanica National Park.
+header: 
+---
+
 
 * Cycling Eastern Serbia
 
@@ -26,6 +40,7 @@ The route I will describe starts in Belgrade, goes along the Danube River, throu
 - Recommended lowest gear: 1:1
 - Recommended tires: 35+ mm or MTB;
 - [[https://cycle.travel/by/sem_sinchenko/eastern_and_central_serbia][Link to the routeplanner]];
+- [[https://www.komoot.com/tour/1355607384][Link to Kamoot]];
 - [[/ssinchenko/gpx/Belgrade_Djerdap_Beljanica_Belgrade.gpx][GPX file]];
 - Total price, including hotels and food in restaurants: 385 Eur^{\star};
 
@@ -41,7 +56,7 @@ All the pictures were made by myself and are placed under Creative Common Licens
 - 200 m elevation
 - 6 hours
 
-The first day of my route was the way from Belgrade to the city of Ram - a small town on the Danube River. This day I cycled about 120 km mostly on the [[https://en.eurovelo.com/ev6/from-belgrade-to-daia-ruse][EuroVel No. 6]] mostly. It is the easiest and, I think, the most boring part of the whole route. You only have to go about 100 km away from Belgrade to see the beauty. The route is flat and mostly goes through  unpaved roads where you cannot face a car.
+The first day of my route was the way from Belgrade to the city of Ram - a small town on the Danube River. This day I cycled about 120 km on the [[https://en.eurovelo.com/ev6/from-belgrade-to-daia-ruse][EuroVel No. 6]] mostly. It is the easiest and, I think, the most boring part of the whole route. You only have to go about 100 km away from Belgrade to see the beauty. The route is flat and mostly goes through  unpaved roads where you cannot face a car.
 
 
 If you start the way early in the morning like I did you will be able to see a sunrise on the Danube from the bridge:
@@ -88,7 +103,7 @@ In the morning of the second day, I faced the light rain. It was cold and wet, b
 
 {{< figure src="/ssinchenko/images/eastern_serbia/DSC01266_mrgd.jpg" alt="The morning way from Ram city under the light raining" width="750px" >}}
 
-I had a coffee break in the restaurant near the [[https://en.wikipedia.org/wiki/Silver_Lake_(Serbia)]][Silver Lake (Srebrno jezero in Serbian)]] - a well organized resort with cafes, shops, beaches and hotels. I spent about an hour waiting for the weather to improve before I left, but it did not. Finally at about 12 pm I decided to continue my way even under the rain.
+I had a coffee break in the restaurant near the [[https://en.wikipedia.org/wiki/Silver_Lake_(Serbia)][Silver Lake (Srebrno jezero in Serbian)]] - a well organized resort with cafes, shops, beaches and hotels. I spent about an hour waiting for the weather to improve before I left, but it did not. Finally at about 12 pm I decided to continue my way even under the rain.
 
 {{< figure src="/ssinchenko/images/eastern_serbia/DSC01275.jpg" alt="The view from the restaurant on the Silver Lake" width="750px" >}}
 
@@ -110,7 +125,7 @@ The day ended with crossing a bridge with a beautiful view and a final climb.
 
 {{< figure src="/ssinchenko/images/eastern_serbia/DSC01322.jpg" alt="The view from the bridge on a small river" width="750px" >}}
 
-It was the first serious climb on the way, something between 3d and 4th category by [[https://support.strava.com/hc/en-us/articles/216917057-Climb-Categorization]][Strava Categorization]], but nothing impossible. Only about 200 meters of elevation gain and the average grade is not that high. You have to get used to such climbs, they will follow you the next days. After the climb there is a downhill almost to the final destination of the day - the [[https://en.wikipedia.org/wiki/Donji_Milanovac][town of Donji Milanovac]].
+It was the first serious climb on the way, something between 3d and 4th category by [[https://support.strava.com/hc/en-us/articles/216917057-Climb-Categorization][Strava Categorization]], but nothing impossible. Only about 200 meters of elevation gain and the average grade is not that high. You have to get used to such climbs, they will follow you the next days. After the climb there is a downhill almost to the final destination of the day - the [[https://en.wikipedia.org/wiki/Donji_Milanovac][town of Donji Milanovac]].
 
 Donji Milanovac is the town on the mountain and I strongly recommend you to book a room in the town center. If not, you risk to follow my mistake when I booked a room in place to reach that you need to climb about 150 meters of altitude with crazy grade 14-16%... I ate that day in the restaurant [[https://maps.app.goo.gl/Zm4biFidQ2bwaoYC8][Lepenska Ribica]] and this place is definitely worth my recommendation! Very nice Pljeckavica is here, one of the best I have tasted in Serbia! There is a supermarket nearby where you can buy protein snacks for the next day if you need them. The souvenir shop is across the street from the supermarket.
 ** The Third Day
