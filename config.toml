@@ -50,6 +50,7 @@ staticDir = ["static"]
   linkedin = "semyon-a-sinchenko"
   strava = "123306719"
   mastodon = "pixelfed.social/i/web/profile/391519829850111071"
+  instagram = "semyonsinchenko"
 
 [[menu.main]]
     name = "Blog"

@@ -1,0 +1,305 @@
+#+title: Cycling Eastern Serbia
+#+date: 2023-10-12T09:45:05+02:00
+#+draft: false
+#+categories[]: bikepacking
+#+tags[]: serbia, cycling, bikepacking
+#+author: Sem Sinchenko
+#+toc: true
+#+header: 
+
+* Cycling Eastern Serbia
+
+I would like to tell you about my bicycle trip through Eastern Serbia. This part of the world is beautiful, but there is a big problem with lack of information in English. So I will try to fill this gap.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01084.jpg" alt="My bicycle" width="750px" >}}
+
+The route I will describe starts in Belgrade, goes along the Danube River, through Djerdap National Park to the border with Serbia, and returns to Belgrade through Kucaj-Beljanica National Park.
+
+** Summary
+
+- Total length: about 700 km;
+- Total elevation: about 5000 m;
+- Highest climbing category: 2;
+- Highest point: 960 m above the sea;
+- Estimated days required: 6-7;
+- Overall level: medium;
+- Recommended lowest gear: 1:1
+- Recommended tires: 35+ mm or MTB;
+- [[https://cycle.travel/by/sem_sinchenko/eastern_and_central_serbia][Link to the routeplanner]];
+- [[/ssinchenko/gpx/Belgrade_Djerdap_Beljanica_Belgrade.gpx][GPX file]];
+- Total price, including hotels and food in restaurants: 385 Eur^{\star};
+
+^{\star}Autumn, 2023
+
+All the pictures were made by myself and are placed under Creative Common License, so you are free to reuse any of these pictures.
+
+** The First Day
+
+**Belgrade - Ram**
+
+- 119 km
+- 200 m elevation
+- 6 hours
+
+The first day of my route was the way from Belgrade to the city of Ram - a small town on the Danube River. This day I cycled about 120 km mostly on the [[https://en.eurovelo.com/ev6/from-belgrade-to-daia-ruse][EuroVel No. 6]] mostly. It is the easiest and, I think, the most boring part of the whole route. You only have to go about 100 km away from Belgrade to see the beauty. The route is flat and mostly goes through  unpaved roads where you cannot face a car.
+
+
+If you start the way early in the morning like I did you will be able to see a sunrise on the Danube from the bridge:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01204.jpg" alt="Sunrise on Danube River" width="750px" >}}
+
+After that you will turn off the busy road onto a dirt road which is the part of EuroVel. The next 20-30 km will be like this. Quiet and relaxing.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01208.jpg" alt="The morning way along Danube" width="750px" >}}
+
+The first small town on the way is Starcevo, where you can rest, drink coffee, refill your water packs and supplies:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01211.jpg" alt="The city of Starcevo" width="750px" >}}
+
+The biggest city on your way is the city of [[https://en.wikipedia.org/wiki/Kovin][Kovin]], about 40 km far away from Belgrade. After that you will turn away from asphalt road to unpaved part of the EuroVel. This way will go almost until the city of Bela Crkva:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01222_mrgd.jpg" alt="The road from Kovin city along EuroVel" width="750px" >}}
+
+The road is quiet but can be a little challenging as the surface is partly sand. This part of the route is one of the reasons why I recommend having at least 35 mm tires.
+
+The end of the day will be in the towns of Bela Crkva and Banatska Palanka. Make sure you check the [[http://www.dunav-trans.com/sr/skela-ram-banatska-palanka/red-voznje.html][ferry schedule]]! If you have some time before the ferry, I strongly recommend you to visit Bela Crkva camp and nearby lakes:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01234.jpg" alt="Lakes near of the Bela Crkva city" width="750px" >}}
+
+After that the last 10 km are the way to the ferry crossing. The ferry station is right next to the restaurant, so you can eat and rest here. The prices are not so high and the view from the restaurant is nice. I caught the beginning of the sunset on the beach, waiting for the ferry:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01243_mrgd.jpg" alt="Sunset from the ferry stop near the Banatska Palanka city" width="750px" >}}
+
+And the end of the day for me was the very beautiful ferry ride from one side of the Danube to the other. I was able to see a beautiful sunset and a perfect view of the ancient [[https://en.wikipedia.org/wiki/Ram_Fortress][RamFortress]]:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01252_mrgd.jpg" alt="Crossing Danube River by Ferry and the view on the Ram Fortress" width="750px" >}}
+
+There are only a few hotels near the ferry station. I choose [[https://maps.app.goo.gl/pSX7BQ7jXhHpvDrz5][Rajski Horizonti]] and can recommend it because there is a place inside the hotel where you can leave the bike. The restaurant is also nearby, in the same building. Try the fish soup made from the local fish - it is really delicious, cheap and the portion is huge (one portion is about two plates).
+
+** The Second Day
+
+**Ram - Donji Milanovac**
+
+- 95 km
+- 460 m elevation
+- 5 hours 15 minutes
+
+In the morning of the second day, I faced the light rain. It was cold and wet, but I had hope that the forecast was true and the weather would get better.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01266_mrgd.jpg" alt="The morning way from Ram city under the light raining" width="750px" >}}
+
+I had a coffee break in the restaurant near the [[https://en.wikipedia.org/wiki/Silver_Lake_(Serbia)]][Silver Lake (Srebrno jezero in Serbian)]] - a well organized resort with cafes, shops, beaches and hotels. I spent about an hour waiting for the weather to improve before I left, but it did not. Finally at about 12 pm I decided to continue my way even under the rain.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01275.jpg" alt="The view from the restaurant on the Silver Lake" width="750px" >}}
+
+Finally, after another 20 km of cycling, I could see the beginning of the [[https://en.wikipedia.org/wiki/%C4%90erdap_National_Park][Djerdap Canyon]] and the [[https://en.wikipedia.org/wiki/Golubac][Golubac Fortress]] in the distance. As far as I know, the fortress was built to control the entrance to Djerdap Canyon. To be honest, I was so happy to finally see mountains that any signs of fatigue immediately flew away!
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01280_mrgd.jpg" alt="The beginning of Djerdap Canyon and Golubac Fortress in the far" width="750px" >}}
+
+The Golubac fortress itself is a very brutal building that is worth seeing! I heard that it was renovated not so long ago. Anyway, it is in good condition now.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01287.jpg" alt="The Golubac Fortress" width="750px" >}}
+
+But the whole road along the Djerdap Canyon is also very beautiful. I cycled very slowly just because I wanted to see as much beauty as possible!
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01284_mrgd.jpg" alt="The way along Djerdap Canyon" width="750px" >}}
+
+You may see tunnels on some photos, but do not be afraid of them. There are only two relatively long tunnels in Djerdap Canyon (about 350 meters), but they are closer to the end of the canyon and there is a special button for cyclists. By pressing the button, you activate a special sign at the entrance of the tunnel, which means something like "Attention! Cyclists in the tunnel, speed 30 km/h". As it is part of EuroVel, there are also signs saying "Attention! Cyclists" everywhere. So do not worry so much about the fact that you are cycling with cars and just relax and see the beauty around you!
+
+The day ended with crossing a bridge with a beautiful view and a final climb.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01322.jpg" alt="The view from the bridge on a small river" width="750px" >}}
+
+It was the first serious climb on the way, something between 3d and 4th category by [[https://support.strava.com/hc/en-us/articles/216917057-Climb-Categorization]][Strava Categorization]], but nothing impossible. Only about 200 meters of elevation gain and the average grade is not that high. You have to get used to such climbs, they will follow you the next days. After the climb there is a downhill almost to the final destination of the day - the [[https://en.wikipedia.org/wiki/Donji_Milanovac][town of Donji Milanovac]].
+
+Donji Milanovac is the town on the mountain and I strongly recommend you to book a room in the town center. If not, you risk to follow my mistake when I booked a room in place to reach that you need to climb about 150 meters of altitude with crazy grade 14-16%... I ate that day in the restaurant [[https://maps.app.goo.gl/Zm4biFidQ2bwaoYC8][Lepenska Ribica]] and this place is definitely worth my recommendation! Very nice Pljeckavica is here, one of the best I have tasted in Serbia! There is a supermarket nearby where you can buy protein snacks for the next day if you need them. The souvenir shop is across the street from the supermarket.
+** The Third Day
+
+**Donji Milanovac - Brza Palanka**
+
+- 90 km
+- 500 m elevation
+- 5 hours 10 minutes
+
+The next day I benefited from the apartments on the top of the mountain part of Donji Milanovac, because I was able to photograph the town exactly as on the freezer magnets you can buy in the souvenir shop:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01330.jpg" alt="The city of Donji Milanovac" width="750px" >}}
+
+When I planned this route, I forgot one important thing about the weather: the Serbian side of the Djerdap Canyon is in the shadow of the mountains until about noon:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01338_mrgd.jpg" alt="Djerdap Canyon in the morning. The sun is already on Romanina side, but Serbian side is still in the shadow of mountain" width="750px" >}}
+
+It was the coldest morning of the whole trip. I almost prayed for the climb to warm up a bit. And my prayers were answered: there are some climbs, one of them in the 3d category. There are also few tunnels, but as I mentioned before, there is no need to worry about them.
+
+
+The most famous place of the Djerdap Canyon is [[https://en.wikipedia.org/wiki/Rock_sculpture_of_Decebalus][the face of Decebalus placed on the rock]] on the Romanian side of the Danube. Decebalus was an ancient king who fought successfully against the Roman Empire. Today he is a national hero of Romania. The monument is really impressive! That was the first point of my trip where I finally understood that everything that happened or would happen was worth the moment I saw Decebalus!
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01352_mrgd.jpg" alt="Rock face of Decebalus, ancient king of Romania and national hero of this country" width="750px" >}}
+
+But it doesn't mean, that other parts of Djerdap are boring. Of course not! There are some photos I made during the raod:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01354_mrgd.jpg" alt="The way in Djerdap Canyon along Danube River" width="750px" >}}
+
+But nothing is endless, and after the last climb I left the Djerdap and found myself in the small town [[https://en.wikipedia.org/wiki/Tekija_(Kladovo)][Tekija]], where I stopped for a coffee and something to eat. There is a big restaurant [[https://maps.app.goo.gl/YJvuJ3u4V7jnfV9fA][Panorama]], from the second floor you have a nice view:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01356.jpg" alt="The view on Danube River from the restaurant in Tekija" width="750px" >}}
+
+20 km from Tekija is the Djerdap hydroelectric power plant and the bridge to Romania. Be prepared for a very long traffic jam formed by the tracks that turn the two-lane road into a single lane. Do not miss [[https://en.wikipedia.org/wiki/Diana_Fortress][the Diana Fortress]] about 200 meters from the border crossing. It is an ancient remnant of the fort that was built in the end of the 100 year A.D. And you are free to go inside and have a walk, no needance even to buy a ticket:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01359_mrgd.jpg" alt="Remaing of the Diana Fortress that was build in the first century A.D." width="750px" >}}
+
+The last major checkpoint on the way is the town of [[https://en.wikipedia.org/wiki/Kladovo][Kladovo]], a medium-sized town. There is a fortress at the entrance of the city and you won't miss it, just look at the signs along the road. But oiverall city is very cozy and nice too.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01366_mrgd.jpg" alt="The city of Kladovo" width="750px" >}}
+
+I ended the day in [[https://en.wikipedia.org/wiki/Brza_Palanka][Brza Palanka]], a small town famous for it's beach. I stopped at a campsite [[https://maps.app.goo.gl/DkRLs1kd6ZLCbhuG9][Mirocka Voda]], they have not only places for tents but also small houses and a shower. I cannot say that the place is very comfortable, but there is a bad under the roof, a shower and a restaurant if you are able to have dinner. What else do we need on a trip?
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01369.jpg" alt="The Mirocka Voda Campside in Brza Palanka" width="750px" >}}
+
+Do not drink a lot of beer in the restaurant, because the next day will be long and tougher than this one! Better to have a good rest and maintain your bike.
+
+** The Fourth Day
+
+**Brza Palanka - Zajecar**
+
+- 135 km
+- 1300 m elevation
+- 8 hours 30 minutes
+
+The fourth day was supposed to be easy and relaxing, but I decided to set myself a challenge. About 10 km away from the campsite I saw a sign "Vratna Stone Gates, Nuatural Monument" on the road. Quick Googling gave me a lot of beautiful photos and the knowledge that this thing is really rare not only in Serbia but in the whole world. There are only few such places on the planet and I made a decision to change my route. [[https://en.wikipedia.org/wiki/Vratna_Gates][Vratna Stone Gates]] are natural stone bridges, a really unique thing. They are located near the Vratna monastery, about 15 km away from the main road. So, visiting Vratna cost me 33 additional km and about 600 meters of altitude. Do not follow my mistake and try to leave Brza Palanka as early as possible, otherwise you risk to finish the road to Zajecar in the dark like me.
+
+The Vratna monastery itself is a very cozy orthodox monastery surrounded by rocks:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01378.jpg" alt="The Vratna Orthodox Monastery" width="750px" >}}
+
+To see the stone gates, you have to leave your bike in the monastery yard, but the monks are okay with it, as far as I understood. The way to the gates is a hiking trail of about 1 km, marked with red circles, so you won't get lost in the forest. And finally you will see this miracle of nature:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01383_mrgd.jpg" alt="The Vratna Stone Gates" width="750px" >}}
+
+Of course it is worth to visit this place, but after returning to the road I found myself 85 km away from the destination and the time was already about 12 pm. So I spent the rest of the day trying to reach the town of Zajecar before it got dark. That is the reason why I do not have many photos of this day, except the one I took in Vratna.
+
+The next big town on the way was [[https://en.wikipedia.org/wiki/Negotin][Negotin]], where I had lunch. Unfortunately I did not have time to look around, I just visited the main square and rode on.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01400.jpg" alt="The city of Negotin" width="750px" >}}
+
+The road to Negotin is very quiet, but has a lot of climbs, one of them in the 3d category and others closer to the 4th. There are not many cars and the road goes through small villages and fields.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01408.jpg" alt="The road to Zajecar from Negotin" width="750px" >}}
+
+You have to follow the signs of EuroVel that will be on the way and that will tell you the remaining distance. After the last big climb you will be able to see the silhouette of Kucaj mountain in the distance. This is your goal for tomorrow, but for today you just need to finish the climb and after that there will be a long nice downhill almost to the town of Zajecar.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01411.jpg" alt="The view on Sunset from the highest point of the road" width="750px" >}}
+
+I made a stop in [[https://en.wikipedia.org/wiki/Zaje%C4%8Dar][Zajecar]] in the apartments near the theater. It is called [[https://www.booking.com/Share-NUQCO3][Teatar Apartment]], there is an option to put your bike in the room. There is also a bathroom and a washing machine, so you can finally clean your clothes. You should also try the Zajecarsko beer here, just because this town is the home of the brand. I can recommend [[https://maps.app.goo.gl/UJs6stCRpnereXsA6][this pub]], they give you not only nice beer, but also the food is very delicious!
+
+This was one of the hardest days for me in terms of total altitude and length. My mistake was to leave Brza Palanka so late that I had to ride the last descent in the dark. Do not make the same mistake!
+
+** The Fifth Day
+
+**Zajecar - Lisine**
+
+- 90 km
+- 1400 m elevation
+- 8 hours
+
+The day began by visiting a [[https://en.wikipedia.org/wiki/Gamzigrad][Felix Romuliana]], or Gamzigrad. It is the very interesting place, remains of the Roman imperial palace of the III century A.D. It is placed about 10 km far from the Zajecar city. You can buy a ticket, in 2023 the price was 500 dinars (\sim 4.5 Eur).
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01414_mrgd.jpg" alt="Gamzigrad, remaining of the Roman Imperial Palace" width="750px" >}}
+
+The next point will be the small village [[https://sr.wikipedia.org/sr-el/%D0%93%D0%B0%D0%BC%D0%B7%D0%B8%D0%B3%D1%80%D0%B0%D0%B4%D1%81%D0%BA%D0%B0_%D0%91%D0%B0%D1%9A%D0%B0][Gamzigradska Banja]]:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01422.jpg" alt="The small Serbian village" width="750px" >}}
+
+After a short climb you are on the road. It is quite busy, but you only have to ride about 15 km here. There is a tunnel on the way and it is quite long, about 500 meters. I strongly advise you not to go inside just because of the traffic. It is safer to go around, there is a dirt road on top, I marked this place in GPX.
+
+Next you will follow signs to the city of [[https://en.wikipedia.org/wiki/Sumrakovac][Sumrakovac]] and next to fields. This part of the way is very relaxing:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01426.jpg" alt="The road through fields and mountain in the distance" width="750px" >}}
+
+Your next middlepoint is [[https://en.wikipedia.org/wiki/Zlot,_Bor][the town of Zlot]]:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01430_mrgd.jpg" alt="The town of Zlot" width="750px" >}}
+
+Make sure you have rested enough here and fill your water packs and snacks. The next part of the day will be a very long climb on the gravel road and the same downhill. This route has lack of civilization, you won't be able to fill water packs except from natural springs. And there won't be any places where you can eat or buy food until the destionation. Also almost the whole way there will be a problem with cell phone connection. Long story short, you are going into the wilderness!
+
+I suggest to save for the last part of the way about 5 hours at least. If you will have enough time in reserve by the moment, you may visit [[https://en.wikipedia.org/wiki/Lazareva_Pe%C4%87ina][Lazar's Cave]] (or Lazareva Pecina in Serbian). It is about 500 meters away from your road.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01433.jpg" alt="The entrance to Lazar's Cave" width="750px" >}}
+
+After that you start the hardest climb of the whole route: the road along [[https://en.wikipedia.org/wiki/Lazar%27s_Canyon][Lazar's Canyon]]. It is a second category climb, but since the road is hard gravel, I would say it is closer to the first category by the amount of time and effort needed to pass it. The only positive thing here is that there are no cars. When I passed it I saw only one car for 5 hours. It starts with a part of about 4 km with a very high gradient up to 14-15% and after that a long part of about 7 km with an average gradient of about 6-7%.
+
+On the top of the first part of the way you will see Lazar's Canyon from the best possible viewpoint. Believe me, all your pain and suffering will be worth the only moment when you will be 650 meters above the sea, looking at this fantastic wonder of nature...
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01437.jpg" alt="Lazar's Canyon from 650 meteres above the sea" width="750px" >}}
+
+It was then that I finally understood that I was off schedule. The sun was setting, 300 meters of climbing and a long downhill awaited me. The road is so hard that I could not go faster than 10-13 km/h even on the downhill. In addition, I realized that there are no cars, no people and no mobile phone connection. It was a really scary moment for me and I didn't take many pictures for the rest of the day.
+
+I will say it again: do not underestimate this part of the route. Before the trip, I trained specifically for second category climbs to understand the time and effort required. But after four days and more than 400 km, there is a lot of cumulative fatigue. Also, as I mentioned before, the road is so hard that in some places with high gradients, my 35mm tires just slipped on small stones of the road. So on some parts I was forced to push the bike instead of riding. Bikepacking turned into bikehiking...
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01444_mrgd.jpg" alt="Gravel road along Lazar's Canyon" width="750px" >}}
+
+When the sun finally went down, I just started the 20km downhill. It was really scary. Going down on hard gravel in the forest with a gradient of -14-16%, a lot of big stones or fallen trees on the way, small streams somewhere crossing the way and absolutely no people or any signs of civilization. I made it in about two hours. After that I decided that I had risked enough on this trip, I had so much cumulative fatigue that I was making one mistake after another in planning and I needed to change something. I decided to rest in Lisine for a whole day and then go to Belgrade by the shortest route.
+
+I made a stop in [[https://maps.app.goo.gl/j2vfffBwnjAiRseV7][Izvor Lisine]], a hotel and conamed restaurant. I can recommend this place, good balance of price and quality and also it is only 250 meters far away from the main waterfall.
+
+** The Sixs Day
+
+- 0 km
+- 0 elevation
+- 0 hours
+
+Lisine is a very nice place. An island of civilization in the middle of [[https://sr.wikipedia.org/sr-el/%D0%9D%D0%B0%D1%86%D0%B8%D0%BE%D0%BD%D0%B0%D0%BB%D0%BD%D0%B8_%D0%BF%D0%B0%D1%80%D0%BA_%D0%9A%D1%83%D1%87%D0%B0%D1%98-%D0%91%D0%B5%D1%99%D0%B0%D0%BD%D0%B8%D1%86%D0%B0][Kucaj-Beljanica National Park]]. It is named like the very big waterfall Lisine (or Veliki Buk that may be translated like Great Beech):
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01456.jpg" alt="Lisine (or Veliki Buk) waterfall" width="750px" >}}
+
+If you go to the waterfall early in the morning, you may see "locals": small black squirells looking around the waterfall for food left by the tourists. I'm sorry for the quality of the photos, it's not an easy task to photograph the fast moving squirell through the manual focus lens. Especially if it is your first time photographing animals!
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01469_mrgd.jpg" alt="The small squirell is looking around for the food" width="750px" >}}
+
+I spent the first half of the day walking around, taking pictures of the environment. And the environment is really beautiful! There are a lot of waterfalls, natural springs coming right out of the rocks, and nice views of the surrounding mountains. Also, I found a lot of signs to the hiking trails, some of them long and hard, but some not so, like 3-5 km. Because of fatigue and the goal of the rest I decided to skip them this time, but you can make a try!
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01487_mrgd.jpg" alt="Lisine" width="750px" >}}
+
+It may sound crazy coming from the person who decided to do a solo bike trip, but in that moment it was so cool just to sit with the understanding that you don't have to ride anywhere that day!
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01498.jpg" alt="Bicycle and mineral water. Rest in Lisine" width="750px" >}}
+
+I also had time to finally do some maintenance on my bike after the hard gravel roads. Here's what my cassette looked like, covered in sand and dust:
+
+{{< figure src="/ssinchenko/images/eastern_serbia/20231014_130829.jpg" alt="Cassete, covered by sand and dust" width="750px" >}}
+
+I met the sunset well rested and in a good mood. I made a decision that I will try to cover 175 km to Belgrade without stopping. But of course I also prepared a backup plan that I can spend one night in [[https://en.wikipedia.org/wiki/Po%C5%BEarevac][Pozarevac]] city which is about 90 km far from me.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01512.jpg" alt="Sunset in the mountains" width="750px" >}}
+
+** The last Day
+
+- 175 km
+- 1130 m elevation
+- 9 hours 50 minutes
+
+In the morning I said goodbye to the mountains and started my way. Due to the necessity to cover 175 km I did not make many stops to take photos. But one place in Kucaj-Beljanica I want to show you. It is a very beautiful monument in the form of a stone flower, placed in the middle of nowhere. Do not miss it!
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01522.jpg" alt="Monument in the form of stone flower" width="750px" >}}
+
+The road is mostly downhill, there is only one 4th category climb until you reach the town of [[https://en.wikipedia.org/wiki/Despotovac][Decpotovac]], where I had coffee and cake. Unfortunately I didn't have time to look around the town, I just saw an orthodox church and some Yugoslavian modernist architecture on the way.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01523.jpg" alt="Orthodox churcn in the city of Despotovac" width="750px" >}}
+
+At this point of the way mountains will left behind and the road will going be boring a little. Endless fields, nothing special to be honest. The only place I found interesting is the town of [[https://en.wikipedia.org/wiki/Svilajnac][Svilajnac]].
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01524_mrgd.jpg" alt="The town of Svilajnac" width="750px" >}}
+
+The weather was getting worse and worse, strong wind from the front and the forecast promised rain in the Belgrade area after noon. Nearer to Pozarevac I started to feel fatigue, but I had understanding that I do not need to go tomorrow and decided to reach the goal. From Pozarevac you just have to follow the signs of another EuroVel route in the direction of [[https://en.wikipedia.org/wiki/Smederevo][Smederevo]]. Smederevo is an interesting place with an old fortress. But I didn't have enough time for it and I already visited this town during one of my vacation bike trips.
+
+{{< figure src="/ssinchenko/images/eastern_serbia/DSC01529.jpg" alt="Smederevo Fortress" width="750px" >}}
+
+The route from Smederevo to Belgrade includes three climbs, two of which are categorical (4th category). Keep it in mind and maybe make a stop in the city if you feel tired by this moment. Also Smderevski Put, as the road is called, is quite busy road, so be sure that your rear lights have enough power left. Belgrade hit me with a hard rain and I spent about the whole hour for the last 8 km of the way in the city. But it was a nice challenge as the icing on the cake, I think I closed the season worthy!
+
+** Conclusion
+
+I cannot say that this route is very difficult. There is nothing special on the way and only one really wild place. You will have enough food and water along the way. At the same time, such a trip is a nice way to get to know Serbia, to see small villages and big cities of this country. And of course, mountains! Djerdap canyon is fantastic, Lisine is beautiful and I have no words to describe my feelings when I stayed on the viewpoint of Lazar's canyon! So, I hope my post can help you with planning and good luck on your way!
+
+** Afterwords
+
+Prices and information are current as of fall 2023. If you have any kind of update, please contact me via email [[mailto:ssinchenko@pm.me][ssinchenko@pm.me]], or if you have a GitHub account, you can open an issue in the [[https://github.com/SemyonSinchenko/ssinchenko][repository]] where my blog is hosted.
