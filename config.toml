@@ -10,6 +10,7 @@ pygmentsCodefencesGuessSyntax = true
 #pygmentOptions = "linenos=inline"
 #disqusShortname = "XXX"
 #googleAnalytics = "XXX"
+enableRobotsTXT = true
 
 staticDir = ["static"]
 
@@ -51,6 +52,11 @@ staticDir = ["static"]
   strava = "123306719"
   mastodon = "pixelfed.social/i/web/profile/391519829850111071"
   instagram = "semyonsinchenko"
+
+[sitemap]
+  changeFreq = ""
+  filename = "sitemap.xml"
+  priority = -1
 
 [[menu.main]]
     name = "Blog"
