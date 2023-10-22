@@ -127,7 +127,7 @@ The day ended with crossing a bridge with a beautiful view and a final climb.
 
 It was the first serious climb on the way, something between 3d and 4th category by [[https://support.strava.com/hc/en-us/articles/216917057-Climb-Categorization][Strava Categorization]], but nothing impossible. Only about 200 meters of elevation gain and the average grade is not that high. You have to get used to such climbs, they will follow you the next days. After the climb there is a downhill almost to the final destination of the day - the [[https://en.wikipedia.org/wiki/Donji_Milanovac][town of Donji Milanovac]].
 
-Donji Milanovac is the town on the mountain and I strongly recommend you to book a room in the town center. If not, you risk to follow my mistake when I booked a room in place to reach that you need to climb about 150 meters of altitude with crazy grade 14-16%... I ate that day in the restaurant [[https://maps.app.goo.gl/Zm4biFidQ2bwaoYC8][Lepenska Ribica]] and this place is definitely worth my recommendation! Very nice Pljeckavica is here, one of the best I have tasted in Serbia! There is a supermarket nearby where you can buy protein snacks for the next day if you need them. The souvenir shop is across the street from the supermarket.
+Donji Milanovac is the town on the mountain and I strongly recommend you to book a room in the town center. If not, you risk to follow my mistake when I booked a room in place on the top. To reach it I climbed about 150 meters of altitude with crazy grade 14-16%... I ate that day in the restaurant [[https://maps.app.goo.gl/Zm4biFidQ2bwaoYC8][Lepenska Ribica]] and this place is definitely worth my recommendation! Very nice Pljeckavica is here, one of the best I have tasted in Serbia! There is a supermarket nearby where you can buy protein snacks for the next day if you need them. The souvenir shop is across the street from the supermarket.
 ** The Third Day
 
 **Donji Milanovac - Brza Palanka**
@@ -159,7 +159,7 @@ But nothing is endless, and after the last climb I left the Djerdap and found my
 
 {{< figure src="/ssinchenko/images/eastern_serbia/DSC01356.jpg" alt="The view on Danube River from the restaurant in Tekija" width="750px" >}}
 
-20 km from Tekija is the Djerdap hydroelectric power plant and the bridge to Romania. Be prepared for a very long traffic jam formed by the tracks that turn the two-lane road into a single lane. Do not miss [[https://en.wikipedia.org/wiki/Diana_Fortress][the Diana Fortress]] about 200 meters from the border crossing. It is an ancient remnant of the fort that was built in the end of the 100 year A.D. And you are free to go inside and have a walk, no needance even to buy a ticket:
+20 km from Tekija is the Djerdap hydroelectric power plant and the bridge to Romania. Be prepared for a very long traffic jam formed by the tracks that turn the two-lane road into a single lane. Do not miss [[https://en.wikipedia.org/wiki/Diana_Fortress][the Diana Fortress]] about 200 meters from the border crossing. It is an ancient remnant of the fort that was built in the end of the 100 year A.D. And you are free to go inside and have a walk, no need to buy a ticket:
 
 {{< figure src="/ssinchenko/images/eastern_serbia/DSC01359_mrgd.jpg" alt="Remaing of the Diana Fortress that was build in the first century A.D." width="750px" >}}
 
@@ -167,7 +167,7 @@ The last major checkpoint on the way is the town of [[https://en.wikipedia.org/w
 
 {{< figure src="/ssinchenko/images/eastern_serbia/DSC01366_mrgd.jpg" alt="The city of Kladovo" width="750px" >}}
 
-I ended the day in [[https://en.wikipedia.org/wiki/Brza_Palanka][Brza Palanka]], a small town famous for it's beach. I stopped at a campsite [[https://maps.app.goo.gl/DkRLs1kd6ZLCbhuG9][Mirocka Voda]], they have not only places for tents but also small houses and a shower. I cannot say that the place is very comfortable, but there is a bad under the roof, a shower and a restaurant if you are able to have dinner. What else do we need on a trip?
+I ended the day in [[https://en.wikipedia.org/wiki/Brza_Palanka][Brza Palanka]], a small town famous for it's beach. I stopped at a campsite [[https://maps.app.goo.gl/DkRLs1kd6ZLCbhuG9][Mirocka Voda]], they have not only places for tents but also small houses and a shower. I cannot say that the place is very comfortable, but there is a bed under the roof, a shower and a restaurant if you are able to have dinner. What else do we need on a trip?
 
 {{< figure src="/ssinchenko/images/eastern_serbia/DSC01369.jpg" alt="The Mirocka Voda Campside in Brza Palanka" width="750px" >}}
 
@@ -255,7 +255,7 @@ I will say it again: do not underestimate this part of the route. Before the tri
 
 When the sun finally went down, I just started the 20km downhill. It was really scary. Going down on hard gravel in the forest with a gradient of -14-16%, a lot of big stones or fallen trees on the way, small streams somewhere crossing the way and absolutely no people or any signs of civilization. I made it in about two hours. After that I decided that I had risked enough on this trip, I had so much cumulative fatigue that I was making one mistake after another in planning and I needed to change something. I decided to rest in Lisine for a whole day and then go to Belgrade by the shortest route.
 
-I made a stop in [[https://maps.app.goo.gl/j2vfffBwnjAiRseV7][Izvor Lisine]], a hotel and conamed restaurant. I can recommend this place, good balance of price and quality and also it is only 250 meters far away from the main waterfall.
+I made a stop in [[https://maps.app.goo.gl/j2vfffBwnjAiRseV7][Izvor Lisine]], a hotel and conamed restaurant. I can recommend this place, good balance of price and quality and also it is only 250 meters away from the main waterfall.
 
 ** The Sixs Day
 
@@ -283,7 +283,7 @@ I also had time to finally do some maintenance on my bike after the hard gravel 
 
 {{< figure src="/ssinchenko/images/eastern_serbia/20231014_130829.jpg" alt="Cassete, covered by sand and dust" width="750px" >}}
 
-I met the sunset well rested and in a good mood. I made a decision that I will try to cover 175 km to Belgrade without stopping. But of course I also prepared a backup plan that I can spend one night in [[https://en.wikipedia.org/wiki/Po%C5%BEarevac][Pozarevac]] city which is about 90 km far from me.
+I met the sunset well rested and in a good mood. I made a decision that I will try to cover 175 km to Belgrade without stopping. But of course I also prepared a backup plan that I could spend one night in [[https://en.wikipedia.org/wiki/Po%C5%BEarevac][Pozarevac]] city which is about 90 km far from me.
 
 {{< figure src="/ssinchenko/images/eastern_serbia/DSC01512.jpg" alt="Sunset in the mountains" width="750px" >}}
 
@@ -301,7 +301,7 @@ The road is mostly downhill, there is only one 4th category climb until you reac
 
 {{< figure src="/ssinchenko/images/eastern_serbia/DSC01523.jpg" alt="Orthodox churcn in the city of Despotovac" width="750px" >}}
 
-At this point of the way mountains will left behind and the road will going be boring a little. Endless fields, nothing special to be honest. The only place I found interesting is the town of [[https://en.wikipedia.org/wiki/Svilajnac][Svilajnac]].
+At this point of the way mountains will be left behind and the road is going be boring a little. Endless fields, nothing special to be honest. The only place I found interesting is the town of [[https://en.wikipedia.org/wiki/Svilajnac][Svilajnac]].
 
 {{< figure src="/ssinchenko/images/eastern_serbia/DSC01524_mrgd.jpg" alt="The town of Svilajnac" width="750px" >}}
 
@@ -309,7 +309,7 @@ The weather was getting worse and worse, strong wind from the front and the fore
 
 {{< figure src="/ssinchenko/images/eastern_serbia/DSC01529.jpg" alt="Smederevo Fortress" width="750px" >}}
 
-The route from Smederevo to Belgrade includes three climbs, two of which are categorical (4th category). Keep it in mind and maybe make a stop in the city if you feel tired by this moment. Also Smderevski Put, as the road is called, is quite busy road, so be sure that your rear lights have enough power left. Belgrade hit me with a hard rain and I spent about the whole hour for the last 8 km of the way in the city. But it was a nice challenge as the icing on the cake, I think I closed the season worthy!
+The route from Smederevo to Belgrade includes three climbs, two of which are categorical (4th category). Keep it in mind and maybe make a stop in the city if you feel tired by this moment. Also Smderevski Put, as the road is called, is quite busy road, so be sure that your rear lights have enough power left. Belgrade hit me with a hard rain and I spent about the whole hour for the last 8 km of the way in the city. But it was a nice challenge as the cherry on the top, I think I closed the season worthy!
 
 ** Conclusion
 
@@ -317,4 +317,4 @@ I cannot say that this route is very difficult. There is nothing special on the 
 
 ** Afterwords
 
-Prices and information are current as of fall 2023. If you have any kind of update, please contact me via email [[mailto:ssinchenko@pm.me][ssinchenko@pm.me]], or if you have a GitHub account, you can open an issue in the [[https://github.com/SemyonSinchenko/ssinchenko][repository]] where my blog is hosted.
+Prices and information are current as of Fall 2023. If you have any kind of update, please contact me via email [[mailto:ssinchenko@pm.me][ssinchenko@pm.me]], or if you have a GitHub account, you can open an issue in the [[https://github.com/SemyonSinchenko/ssinchenko][repository]] where my blog is hosted.
