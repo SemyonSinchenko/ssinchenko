@@ -12,7 +12,9 @@ toc: true
 include_toc: true
 ---
 
-* How Databricks Runtime 14.x destroyed 3d-party PySpark packages compatibility
+In this post, I want to discuss the groundbreaking changes in the latest LTS release of the Databricks runtime. This release introduced Spark Connect as the default way to work with shared clusters. I will give a brief introduction to the topic of internal JVM calls and Spark Connect, provide examples of 3d-party OSS projects broken in 14.3, and try to understand the reasons for such a move by Databricks.
+
+# more
 
 ** Preface
 
