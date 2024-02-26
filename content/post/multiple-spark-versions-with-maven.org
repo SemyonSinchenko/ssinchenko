@@ -1,0 +1,336 @@
+---
+title: Supporting multiple Apache Spark versions with Maven
+date: 2024-02-25T12:00:05+02:00
+draft: false
+categories:
+  - data-engineering
+tags:
+  - spark
+  - maven
+  - scala
+author: "Sem Sinchenko"
+cover:
+  image: "https://upload.wikimedia.org/wikipedia/commons/5/52/Apache_Maven_logo.svg"
+summary: I recently had the opportunity to work on an open source project that implements a custom Apache Spark data source and associated logic for working with graph data. The code was written to work with Apache Spark 3.2.2. I am committed to extending support to multiple versions of Spark. In this blog post I want to show how the structure of such a project can be organized using Maven profiles.
+---
+
+** Preface
+
+There is no rocket science in this blog post, just some examples and information from the official Maven documentation. By the way, when I started working on this topic, it was not easy to find an example on the Internet. Even ChatGPT did not provide me with a 100% working solution in case of a complex Maven project. From this point of view, I think that my post might be useful for someone who wants to dive into the similar topic from scratch.
+
+** Introduction
+
+I always like two topics: Apache Spark and graphs. Recently I had a nice chance to work on an open source project that combines these two topics. It is a [[https://github.com/alibaba/GraphAr][GraphAr]] project, a novel way and format to store network data in data lakes. You can think of it as a /Delta Lake for Big Graphs/, just because the general idea is quite close: we have a metadata file and store the underlying data (vertices and edges) in =parquet= (or =orc=, or =csv=) files. The project is quite young, so initially only Apache Spark 3.2.2 was supported. I have been looking for a new OSS project to contribute to for a long time, so I committed to extend support to at least two versions: =3.2.2= and =3.3.4=.
+
+Initially the project [[https://github.com/alibaba/GraphAr/tree/4158bb8167694b0bca5d799c9ce3f52b71b61141/spark][had the structure]] like this:
+
+#+begin_example
+| graphar
+|- spark
+|-- src
+|--- main
+|---- scala/com/alibaba/graphar
+|----- datasources
+|------ GarDataSource.scala
+|------ ...
+|----- commonCode
+|------ CommonClass.scala
+|------ AnotherCommonClass.scala
+|-- pom.xml
+#+end_example
+
+*** The main problem: Spark Datasources API
+
+An implementation of tools for working with a =GraphAr= format in Spark contains two main parts:
+
+- An implementation of helpers and methods for working with metadata
+- An implementation of =datasources= to allow users to write =read.format("com.alibaba.graphar.datasources.GarDataSource").save("...")=
+
+If the first one is mostly generic and uses spark =@Stable= APIs, the second one is quite tricky and calls parquet, orc and csv =ReaderFactory= / =OutputWriter= implementations. Because of continued moving internal spark datasources from =v1= to =v2=, the second part is the biggest problem. Even switching from =3.2.x= to =3.3.x= break everything.
+
+*** Obvious solution: reflection
+
+The first and quite obvious though is, of course, to use Reflection API. It is a relative low-level JVM API that allows you to call classes and methods in a runtime. For example, let's imagine we have a class that has a static method =staticMethod(s: String) => Int= in spark 3.3.x but =staticMethod(b: Boolean) => Int= in spark 3.2.
+
+#+begin_src scala
+val myClass = Class.forName("com.mypackage.MyClass")
+val staticMethod = myClass.getMethod("staticMethod")
+
+spark.version match {
+  case s: String if s.startsWith("3.3") => staticMethod
+    .invoke("true").asInstanceOf[Int]
+  case _ => staticMethod.invoke(true).asInstanceOf[Int]
+#+end_src
+
+The first problem is that such a code is very hard to read and maintain. In such a case you loose all the capabilities of modern IDEs like Emacs, that shows you inline errors and suggestions. Also, you loose an advantage of compiled language, because if you make a typo in a name of the class, or in a name of the method, you will know it only in runtime. Btw, spark itself uses =reflection= API to support both =Hadoop 2= / =Hadoop 3=.
+
+The second problem is that reflection can help you to resolve simple cases when an API of some library was changed. But reflection cannot help you, for example, if you need to override a Class or an Interface and this class/interface changed from one version of the library to another. That was exactly the case of =com.alibaba.graphar.datasources=.
+
+** The right way to do it: Maven Profiles
+
+Even being little /old-school/ tool and being not specially supposed for Scala projects, [[https://maven.apache.org/][Apache Maven]] is still very popular and very reliable building system for any JVM project. What is most important is that Maven provide [[https://maven.apache.org/guides/mini/guide-multiple-modules.html#the-reactor][Reactor]], a tool for working with multi-projects with complex dependencies.
+
+*** Splitting GraphAr to common part and datasources part
+
+The first thing I needed to do is to split the monolithic =GraphAr Spark= project into two parts:
+
+- A =common= part that contains the code, that uses =@Stable= API of spark
+- A =datasources= subproject, that contains overriding of rapidly changing spark internal classes
+
+Because it was expected to provide the support of multiple spark versions in the future, I choose the following project structure:
+
+#+begin_example
+| graphar
+|- spark
+|-- graphar
+|--- src/main/scala/com/alibaba/graphar/...
+|--- pom.xml
+|-- datasources-32
+|--- src/main/scala/com/alibaba/graphar/...
+|--- pom.xml
+|-- datasources-33
+|----src/main/scala/com/alibaba/graphar/...
+|-- pom.xml
+#+end_example
+
+Here =graphar= should contain the common code, and we have two =datasources= submodule version. One for spark =3.2.x= and for spark =3.3.x= specific code.
+
+** Top-level pom.xml file
+
+The top-level =pom.xml= is quite simple and defines mostly the profiles. We will use one profile for spark =3.2.x= and one for spark =3.3.x=:
+
+#+begin_src xml
+  <?xml version="1.0" encoding="UTF-8"?>
+  <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+      <modelVersion>4.0.0</modelVersion>
+
+      <groupId>com.alibaba</groupId>
+      <artifactId>graphar</artifactId>
+      <version>${graphar.version}</version>
+      <packaging>pom</packaging>
+
+      <profiles>
+          <profile>
+              <id>datasources-32</id>
+              <properties>
+                  <sbt.project.name>graphar</sbt.project.name>
+                  ...
+                  <spark.version>3.2.2</spark.version>
+                  ...
+                  <graphar.version>0.1.0-SNAPSHOT</graphar.version>
+              </properties>
+              <modules>
+                  <module>graphar</module>
+                  <module>datasources-32</module>
+              </modules>
+              <activation>
+                  <activeByDefault>true</activeByDefault>
+              </activation>
+          </profile>
+          <profile>
+              <id>datasources-33</id>
+              <properties>
+                  <sbt.project.name>graphar</sbt.project.name>
+                  ...
+                  <spark.version>3.3.4</spark.version>
+                  ...
+                  <graphar.version>0.1.0-SNAPSHOT</graphar.version>
+              </properties>
+              <modules>
+                  <module>graphar</module>
+                  <module>datasources-33</module>
+              </modules>
+          </profile>
+      </profiles>
+      <build>
+          <plugins>
+            ...
+          </plugins>
+      </build>
+  </project>
+#+end_src
+
+What is important here is that Maven Profiles does not allow you to override dependencies or other complex things. But, it allows you to create or override =properties= and you can use =property=, for example, for spark version for further overriding of dependencies!
+
+#+begin_quote
+To use Reactor build, the top-level module should always use =pom= packaging system.
+#+end_quote
+
+Starting from this moment you can call any Maven command for a specific profile in the following way:
+
+#+begin_src shell
+mvn clean package -P datasources-32
+mvn clean package -P datasources-33
+#+end_src
+
+*** A small note about IDEs integration
+
+For a smooth integration with a Language Server (like [[https://scalameta.org/metals/][metals]]) you need to specify, which profile should be used. You can add a default profile into top-level =pom.xml= in the following way (in a =profile= tag):
+
+#+begin_src xml
+<activation>
+    <activeByDefault>true</activeByDefault>
+</activation>
+#+end_src
+
+** datasources submodule pom.xml
+
+#+begin_quote
+It is important to have =scala-maven-plugin= inside the =pom.xml= of every submodule, that contains scala code! Otherwise, even if =Reactor= choose the right compilation order, there will be errors because plugins are not pushed down from parent module to submodules!
+#+end_quote
+
+Any submodule in multi-module project should contains own =pom.xml=, that defines =parent= project. Cool thing is that inside submodule pom you can refer to properties, defined in the parent pom! Let's see on a =GraphAr= submodule pom for datasources:
+
+#+begin_src xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.alibaba</groupId>
+        <artifactId>graphar</artifactId>
+        <version>${graphar.version}</version>
+    </parent>
+
+    <groupId>com.alibaba</groupId>
+    <artifactId>graphar-datasources</artifactId>
+    <version>${graphar.version}</version>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-hive_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+          ...
+        </plugins>
+    </build>
+</project>
+#+end_src
+
+As one may see, we are defining spark-core and spark-sql dependencies using a parent module properties =spark.version= and =scala.version=!
+
+#+begin_quote
+=<scope>provided</scope>= here means that the dependency classes should not be included into output JAR file and will be presented in CP in runtime.
+#+end_quote
+
+** Commons submodule pom.xml
+
+In our case, commons are depends on =datasources= implementation. But, because the package and classes in both =datasources-32= and =datasources-33= are the same, we do not need to specify it for each profile. It is enough to specify it only once as a dependency:
+
+#+begin_src xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.alibaba</groupId>
+        <artifactId>graphar</artifactId>
+        <version>${graphar.version}</version>
+    </parent>
+
+    <groupId>com.alibaba</groupId>
+    <artifactId>graphar-commons</artifactId>
+    <version>${graphar.version}</version>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>graphar-datasources</artifactId>
+            <version>${graphar.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        ...
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <version>3.1.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+            <scope>provided</scope>
+        </dependency>
+       ...
+    </dependencies>
+    <build>
+        <plugins>
+            ...
+        </plugins>
+    </build>
+</project>
+#+end_src
+
+As one may see in this case =Reactor= will resolve the following dependency as an inner one:
+
+#+begin_src xml
+<dependency>
+  <groupId>com.alibaba</groupId>
+  <artifactId>graphar-datasources</artifactId>
+  <version>${graphar.version}</version>
+</dependency>
+#+end_src
+
+#+begin_quote
+It is important to have =scalatest= in all the submodules that contain tests!
+#+end_quote
+
+** How Reactor build looks like
+
+Let's see on an output of, for example, =mvn clean package -P datasources-33=:
+
+#+begin_src shell
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO]
+[INFO] graphar                                                            [pom]
+[INFO] graphar-datasources                                                [jar]
+[INFO] graphar-commons                                                    [jar]
+[INFO]
+#+end_src
+
+In this case, Maven realized, that =graphar= is just a top-level pom-module and that =datasources= should be compiled first because =commons= depends on it.
+
+You can use [[https://github.com/alibaba/GraphAr/tree/b4e076af555c2977b3c3a966c505f1eb2064084d/spark][GraphAr Spark]] implementation as a source of inspiration for your own spark-related projects. I hope that you found that post useful!

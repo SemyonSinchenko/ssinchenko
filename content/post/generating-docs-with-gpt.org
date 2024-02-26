@@ -2,7 +2,7 @@
 #+date: 2023-04-06T14:11:05+02:00
 #+draft: false
 #+categories[]: ai
-#+tags[]: python, documentation, gpt, emacs
+#+tags[]: python documentation gpt emacs
 #+author: Sem Sinchenko
 #+toc: true
 

@@ -2,7 +2,7 @@
 #+date: 2023-09-29T17:29:05+02:00
 #+draft: false
 #+categories[]: nixos
-#+tags[]: python, nixos
+#+tags[]: python nixos
 #+author: Sem Sinchenko
 #+toc: true
 

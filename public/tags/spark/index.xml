@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Spark on Sem Sinchenko</title>
+    <link>http://localhost:1313/ssinchenko/tags/spark/</link>
+    <description>Recent content in Spark on Sem Sinchenko</description>
+    <image>
+      <title>Sem Sinchenko</title>
+      <url>http://localhost:1313/ssinchenko/images/avatar-favicon.png</url>
+      <link>http://localhost:1313/ssinchenko/images/avatar-favicon.png</link>
+    </image>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 25 Feb 2024 12:00:05 +0200</lastBuildDate>
+    <atom:link href="http://localhost:1313/ssinchenko/tags/spark/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Supporting multiple Apache Spark versions with Maven</title>
+      <link>http://localhost:1313/ssinchenko/post/multiple-spark-versions-with-maven/</link>
+      <pubDate>Sun, 25 Feb 2024 12:00:05 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/multiple-spark-versions-with-maven/</guid>
+      <description>I had a chance to work recently on an open source project that implements a custom Apache Spark datasource and related logic for working with Graphs data. The code was written to work with Apache Spark 3.2.2. I committed to extend the support to multiple versions of Spark. In this blog-post I would like to show how the structure of such a project it may be organized with Maven Profiles</description>
+    </item>
+    <item>
+      <title>How Databricks Runtime 14.x destroyed 3d-party PySpark packages compatibility</title>
+      <link>http://localhost:1313/ssinchenko/post/how-databricks-14x-breaks-3dparty-compatibility/</link>
+      <pubDate>Thu, 22 Feb 2024 14:00:05 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/how-databricks-14x-breaks-3dparty-compatibility/</guid>
+      <description>In this post, I want to discuss the groundbreaking changes in the latest LTS release of the Databricks runtime. This release introduced Spark Connect as the default way to work with shared clusters. I will give a brief introduction to the topic of internal JVM calls and Spark Connect, provide examples of 3d-party OSS projects broken in 14.3, and try to understand the reasons for such a move by Databricks.</description>
+    </item>
+    <item>
+      <title>PySpark column lineage</title>
+      <link>http://localhost:1313/ssinchenko/post/pyspark-column-lineage/</link>
+      <pubDate>Wed, 10 Jan 2024 12:00:05 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/pyspark-column-lineage/</guid>
+      <description>In this post, I will show you how to use information from the spark plan to track data lineage at the column level. This approach will also works with recently introduced SparkConnect.</description>
+    </item>
+    <item>
+      <title>How to estimate a PySpark DF size?</title>
+      <link>http://localhost:1313/ssinchenko/post/estimation-spark-df-size/</link>
+      <pubDate>Thu, 23 Nov 2023 23:27:05 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/estimation-spark-df-size/</guid>
+      <description>Sometimes it is an important question, how much memory does our DataFrame use? And there is no easy answer if you are working with PySpark. You can try to collect the data sample and run local memory profiler. You can estimate the size of the data in the source (for example, in parquet file). But we will go another way and try to analyze the logical plan of Spark from PySpark. In case when we are working with Scala Spark API we are able to work with resolved or unresolved logical plans and physical plan via a special API. But from PySpark API only string representation is available and we will work with it.</description>
+    </item>
+    <item>
+      <title>Working With File System from PySpark</title>
+      <link>http://localhost:1313/ssinchenko/post/working-with-fs-pyspark/</link>
+      <pubDate>Thu, 30 Mar 2023 00:21:28 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/working-with-fs-pyspark/</guid>
+      <description>Working with File System from PySpark Motivation Any of us is working with File System in our work. Almost every pipeline or application has some kind of file-based configuration. Typically json or yaml files are used. Also for data pipelines, it is sometimes important to be able to write results or state them in a human-readable format. Or serialize some artifacts, like matplotlib plot, into bytes and write them to the disk.</description>
+    </item>
+  </channel>
+</rss>

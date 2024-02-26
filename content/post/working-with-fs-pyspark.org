@@ -2,7 +2,7 @@
 #+date: 2023-03-30T00:21:28+02:00
 #+draft: false
 #+categories[]: data-engineering
-#+tags[]: pyspark, spark, hadoop
+#+tags[]: pyspark spark hadoop
 #+author: Sem Sinchenko
 #+toc: true
 

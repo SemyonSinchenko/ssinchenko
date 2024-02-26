@@ -1,12 +1,13 @@
 baseurl = "https://semyonsinchenko.gihub.io/ssinchenko/"
 DefaultContentLanguage = "en"
 title = "Sem Sinchenko"
-theme = "beautifulhugo"
+#theme = "beautifulhugo"
+theme = "PaperMod"
 pygmentsStyle = "trac"
 pygmentsUseClasses = true
 pygmentsCodeFences = true
 pygmentsCodefencesGuessSyntax = true
-#pygmentsUseClassic = true
+pygmentsUseClassic = true
 #pygmentOptions = "linenos=inline"
 #disqusShortname = "XXX"
 #googleAnalytics = "XXX"
@@ -14,44 +15,92 @@ enableRobotsTXT = true
 
 staticDir = ["static"]
 
-[Params]
-#  homeTitle = "Beautiful Hugo Theme" # Set a different text for the header on the home page
-  subtitle = "My private blog about me, my life and my work."
-  mainSections = ["post","posts"]
-  logo = "img/avatar-icon.png" # Expecting square dimensions
-  favicon = "img/favicon.ico"
-  dateFormat = "January 2, 2006"
-  commit = false
-  rss = true
-  comments = true
-  readingTime = true
-  wordCount = true
-  useHLJS = true
-  socialShare = true
-  delayDisqus = true
-  showRelatedPosts = true
-#  hideAuthor = true
-#  gcse = "012345678901234567890:abcdefghijk" # Get your code from google.com/cse. Make sure to go to "Look and Feel" and change Layout to "Full Width" and Theme to "Classic"
+# [Params]
+#   homeTitle = "Sem Sinchenko"
+#   subtitle = "My private blog about me, my life and my work."
+#   mainSections = ["post","posts"]
+#   logo = "img/avatar-icon.png" # Expecting square dimensions
+#   favicon = "img/favicon.ico"
+#   dateFormat = "January 2, 2006"
+#   commit = false
+#   rss = true
+#   comments = true
+#   readingTime = true
+#   wordCount = true
+#   useHLJS = true
+#   socialShare = true
+#   delayDisqus = true
+#   showRelatedPosts = true
 
-#[[Params.bigimg]]
-#  src = "img/triangle.jpg"
-#  desc = "Triangle"
-#[[Params.bigimg]]
-#  src = "img/sphere.jpg"
-#  desc = "Sphere"
-#  # position: see values of CSS background-position.
-#  position = "center top"
-#[[Params.bigimg]]
-#  src = "img/hexagon.jpg"
-#  desc = "Hexagon"
+[params]
+  env = "production"
+  description = "My private blog"
+  author = "Sem Sinchenko"
+  defaultTheme = "auto"
+  ShowShareButtons = true
+  ShowReadingTime = true
+  ShowToc = false
+  ShowPostNavLinks = true
+  ShowCodeCopyButtons = true
+  ShowRssButtonInSectionTermList = true
+  images = [ "images/avatar-favicon.png" ]
+
+[params.profileMode]
+  enabled = false
+
+[params.homeInfoParams]
+  Title = "Welcome to my Blog!"
+  Content = """👋👋👋 Welcome to my personal blog!
+
+I'm a Russian-born data engineer living in Belgrade, Serbia since 2022.
+
+My blog contains the context mostly about three topics:
+1. My exploration of modern data stack and selected engineering topics such as Python/JVM development, Apache Spark, etc.
+2. Stories about my contribution to OSS projects
+3. Reports from my personal bikepacking tours
+
+About any questions related to this blog you can contact me via email: ssinchenko@pm.me
+  """
+
+[[params.socialIcons]]
+  name = "github"
+  title = "My GitHub profile"
+  url = "https://github.com/SemyonSinchenko"
+
+[[params.socialIcons]]
+  name = "linkedin"
+  title = "My LinkedIn profile"
+  url = "https://www.linkedin.com/in/semyon-a-sinchenko/"
+
+[[params.socialIcons]]
+  name = "pixelfed"
+  title = "My Pixelfed with selected photos"
+  url = "https://pixelfed.social/i/web/profile/391519829850111071"
+
+[[params.socialIcons]]
+  name = "rss"
+  title = "Atom/RSS feed of this blog"
+  url = "https://semyonsinchenko.github.io/ssinchenko/index.xml"
+
+[[params.socialIcons]]
+  name = "email"
+  title = "Contact me via email"
+  url = "mailto:ssinchenko@pm.me"
+
+
+[params.assets]
+  favicon = "images/fav/favicon.ico"
+  favicon16x16 = "images/fav/favicon-16x16.png"
+  favicon32x32 = "images/fav/favicon-32x32.png"
+  apple_touch_icon = "images/fav/apple-touch-icon.png"
+  android-chrome-192x192 = "images/fav/android-chrome-192x192.png"
+  android-chrome-512x512 = "images/fav/android-chrome-512x512.png"
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
 
 [Author]
-  email = "ssinchenko@protonmail.com"
-  github = "SemyonSinchenko"
-  linkedin = "semyon-a-sinchenko"
-  strava = "123306719"
-  mastodon = "pixelfed.social/i/web/profile/391519829850111071"
-  instagram = "semyonsinchenko"
+  email = "ssinchenko@pm.me"
 
 [sitemap]
   changeFreq = ""

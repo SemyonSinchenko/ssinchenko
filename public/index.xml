@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Sem Sinchenko</title>
+    <link>http://localhost:1313/ssinchenko/</link>
+    <description>Recent content on Sem Sinchenko</description>
+    <image>
+      <title>Sem Sinchenko</title>
+      <url>http://localhost:1313/ssinchenko/images/avatar-favicon.png</url>
+      <link>http://localhost:1313/ssinchenko/images/avatar-favicon.png</link>
+    </image>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 25 Feb 2024 12:00:05 +0200</lastBuildDate>
+    <atom:link href="http://localhost:1313/ssinchenko/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Supporting multiple Apache Spark versions with Maven</title>
+      <link>http://localhost:1313/ssinchenko/post/multiple-spark-versions-with-maven/</link>
+      <pubDate>Sun, 25 Feb 2024 12:00:05 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/multiple-spark-versions-with-maven/</guid>
+      <description>I recently had the opportunity to work on an open source project that implements a custom Apache Spark data source and associated logic for working with graph data. The code was written to work with Apache Spark 3.2.2. I am committed to extending support to multiple versions of Spark. In this blog post I want to show how the structure of such a project can be organized using Maven profiles.</description>
+    </item>
+    <item>
+      <title>How Databricks Runtime 14.x destroyed 3d-party PySpark packages compatibility</title>
+      <link>http://localhost:1313/ssinchenko/post/how-databricks-14x-breaks-3dparty-compatibility/</link>
+      <pubDate>Thu, 22 Feb 2024 14:00:05 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/how-databricks-14x-breaks-3dparty-compatibility/</guid>
+      <description>In this post, I want to discuss the groundbreaking changes in the latest LTS release of the Databricks runtime. This release introduced Spark Connect as the default way to work with shared clusters. I will give a brief introduction to the topic of internal JVM calls and Spark Connect, provide examples of 3d-party OSS projects broken in 14.3, and try to understand the reasons for such a move by Databricks.</description>
+    </item>
+    <item>
+      <title>PySpark column lineage</title>
+      <link>http://localhost:1313/ssinchenko/post/pyspark-column-lineage/</link>
+      <pubDate>Wed, 10 Jan 2024 12:00:05 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/pyspark-column-lineage/</guid>
+      <description>In this post, I will show you how to use information from the spark plan to track data lineage at the column level. This approach will also works with recently introduced SparkConnect.</description>
+    </item>
+    <item>
+      <title>How to estimate a PySpark DF size?</title>
+      <link>http://localhost:1313/ssinchenko/post/estimation-spark-df-size/</link>
+      <pubDate>Thu, 23 Nov 2023 23:27:05 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/estimation-spark-df-size/</guid>
+      <description>Sometimes it is an important question, how much memory does our DataFrame use? And there is no easy answer if you are working with PySpark. You can try to collect the data sample and run local memory profiler. You can estimate the size of the data in the source (for example, in parquet file). But we will go another way and try to analyze the logical plan of Spark from PySpark. In case when we are working with Scala Spark API we are able to work with resolved or unresolved logical plans and physical plan via a special API. But from PySpark API only string representation is available and we will work with it.</description>
+    </item>
+    <item>
+      <title>Cycling Eastern Serbia</title>
+      <link>http://localhost:1313/ssinchenko/post/cycling-eastern-serbia/</link>
+      <pubDate>Thu, 12 Oct 2023 09:45:05 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/cycling-eastern-serbia/</guid>
+      <description>I would like to tell you about my bicycle trip through Eastern Serbia. This part of the world is beautiful, but there is a big problem with lack of information in English. So I will try to fill this gap. The route I will describe starts in Belgrade, goes along the Danube River, through Djerdap National Park to the border with Serbia, and returns to Belgrade through Kucaj-Beljanica National Park.</description>
+    </item>
+    <item>
+      <title>Using Pyenv with NixOS</title>
+      <link>http://localhost:1313/ssinchenko/post/using-pyenv-with-nixos/</link>
+      <pubDate>Fri, 29 Sep 2023 17:29:05 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/using-pyenv-with-nixos/</guid>
+      <description>The problem Recently I decided to switch from Ubuntu to NixOS. Do not ask me why, it was just for fun mostly. One of the main ideas behind NixOS is to separation of dependencies: each new package is installed into separate sandbox with own scope of dependencies. By design it should make system significantly more stable but sometimes there are problems. One of such problems I faced with pyenv – a tool for simplifying python versions management.</description>
+    </item>
+    <item>
+      <title>Generating docstrings with GPT</title>
+      <link>http://localhost:1313/ssinchenko/post/generating-docs-with-gpt/</link>
+      <pubDate>Thu, 06 Apr 2023 14:11:05 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/generating-docs-with-gpt/</guid>
+      <description>Generating Python docstrings with GPT and Emacs Motivation There is an open source library in which I&amp;#39;m a maintainer. And recently I committed to creating docstrings for all the public functions and methods. I heard that recent Large Language Models (LLM) are good enough in the annotation of texts and documenting of code so I decided to try to use one of OpenAI models to solve this problem. In this post I will use Emacs plugins and extensions to generate docstrings but most advises about which prompt is better to use are generic and may be used with different code editors and IDE&amp;#39;s.</description>
+    </item>
+    <item>
+      <title>Working With File System from PySpark</title>
+      <link>http://localhost:1313/ssinchenko/post/working-with-fs-pyspark/</link>
+      <pubDate>Thu, 30 Mar 2023 00:21:28 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/working-with-fs-pyspark/</guid>
+      <description>Working with File System from PySpark Motivation Any of us is working with File System in our work. Almost every pipeline or application has some kind of file-based configuration. Typically json or yaml files are used. Also for data pipelines, it is sometimes important to be able to write results or state them in a human-readable format. Or serialize some artifacts, like matplotlib plot, into bytes and write them to the disk.</description>
+    </item>
+    <item>
+      <title></title>
+      <link>http://localhost:1313/ssinchenko/page/cv/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/ssinchenko/page/cv/</guid>
+      <description>CV About Name: Semyon Sinchenko Title: Senior Data Engineer Company: Raiffeisenbank International AG Location: Belgrade, Serbia Key Skills: Python, Apache Spark, ETL, Scala, MLOps Languages: English Russian Contacts ssinchenko@protonmail.com
+Career Senior Data Engineer dates: July 2022 - onwards company: Raiffeisenbank International AG division: Advanced Analytics, Retail Tribe skills: Python, Databricks, PySpark, Apache Spark, MLFlow, SQL Achievements:
+Designed and implemented ML Production Pipelines in Databricks with MLFlow and Apache Spark Created a lot of ETL-pipelines for various Data Marts with PySpark and Databricks Designed and implemented Feature Store for both Production and Development of ML Models Data Engineer dates: October 2020 - July 2022 company: Raiffeisenbank Russia division: HR Department skills: Python, Java, Scala, Apache Spark, Hadoop, Hive, Apache Airflow, SQL Achievements:*</description>
+    </item>
+    <item>
+      <title>About me</title>
+      <link>http://localhost:1313/ssinchenko/page/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/ssinchenko/page/about/</guid>
+      <description>My name is Semyon Sinchenko but you can call me just Sem.
+I&amp;rsquo;m working as a Data Engineer in retail banking. I&amp;rsquo;m a big fan of open source software, quantum physics and old-school science fiction.</description>
+    </item>
+  </channel>
+</rss>

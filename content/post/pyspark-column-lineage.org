@@ -8,8 +8,9 @@ tags:
   - spark
   - pyspark
 author: "Sem Sinchenko"
-toc: true
-include_toc: true
+cover:
+  image: "https://upload.wikimedia.org/wikipedia/commons/f/f3/Apache_Spark_logo.svg"
+summary: In this post, I will show you how to use information from the spark plan to track data lineage at the column level. This approach will also works with recently introduced SparkConnect.
 ---
 
 * PySpark column-level lineage

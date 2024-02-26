@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Nixos on Sem Sinchenko</title>
+    <link>http://localhost:1313/ssinchenko/tags/nixos/</link>
+    <description>Recent content in Nixos on Sem Sinchenko</description>
+    <image>
+      <title>Sem Sinchenko</title>
+      <url>http://localhost:1313/ssinchenko/images/avatar-favicon.png</url>
+      <link>http://localhost:1313/ssinchenko/images/avatar-favicon.png</link>
+    </image>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Fri, 29 Sep 2023 17:29:05 +0200</lastBuildDate>
+    <atom:link href="http://localhost:1313/ssinchenko/tags/nixos/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Using Pyenv with NixOS</title>
+      <link>http://localhost:1313/ssinchenko/post/using-pyenv-with-nixos/</link>
+      <pubDate>Fri, 29 Sep 2023 17:29:05 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/using-pyenv-with-nixos/</guid>
+      <description>The problem Recently I decided to switch from Ubuntu to NixOS. Do not ask me why, it was just for fun mostly. One of the main ideas behind NixOS is to separation of dependencies: each new package is installed into separate sandbox with own scope of dependencies. By design it should make system significantly more stable but sometimes there are problems. One of such problems I faced with pyenv – a tool for simplifying python versions management.</description>
+    </item>
+  </channel>
+</rss>

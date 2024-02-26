@@ -7,14 +7,11 @@ categories:
 tags:
   - spark
   - pyspark
-author: "Sem Sinchenko"
-toc: true
-include_toc: true
+author: ["Sem Sinchenko"]
+cover:
+  image: "https://upload.wikimedia.org/wikipedia/commons/6/63/Databricks_Logo.png"
+summary: In this post, I want to discuss the groundbreaking changes in the latest LTS release of the Databricks runtime. This release introduced Spark Connect as the default way to work with shared clusters. I will give a brief introduction to the topic of internal JVM calls and Spark Connect, provide examples of 3d-party OSS projects broken in 14.3, and try to understand the reasons for such a move by Databricks.
 ---
-
-In this post, I want to discuss the groundbreaking changes in the latest LTS release of the Databricks runtime. This release introduced Spark Connect as the default way to work with shared clusters. I will give a brief introduction to the topic of internal JVM calls and Spark Connect, provide examples of 3d-party OSS projects broken in 14.3, and try to understand the reasons for such a move by Databricks.
-
-# more
 
 ** Preface
 
@@ -22,7 +19,7 @@ I work for a company that is a customer of the Databricks platform. However, thi
 
 ** Introduction: Spark-Connect
 
-When I saw the announcement of [[https://www.databricks.com/blog/2022/07/07/introducing-spark-connect-the-power-of-apache-spark-everywhere.html][Spark Connect]] for the first time, I had very controversial feelings. From one side, developers of PySpark applications are finally getting the ability to use the latest version of Python and not depend on the long list of PySpark dependencies and JVM. But from the other side, I was thinking about how 3d-party PySpark libraries should work with it?
+When I saw the announcement of [[https://www.databricks.com/blog/2022/07/07/introducing-spark-connect-the-power-of-apache-spark-everywhere.html][Spark Connect]] for the first time, I had very controversial feelings. From one side, developers of PySpark applications are finally getting the ability to use the latest minor version of Python and not depend on the long list of PySpark dependencies and JVM. But from the other side, I was thinking about how 3d-party PySpark libraries should work with it?
 
 *** A common pattern of 3d-party PySpark packages
 

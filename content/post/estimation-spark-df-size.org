@@ -8,8 +8,9 @@ tags:
   - spark
   - pyspark
 author: "Sem Sinchenko"
-toc: true
-include_toc: true
+cover:
+  image: "https://upload.wikimedia.org/wikipedia/commons/f/f3/Apache_Spark_logo.svg"
+summary: Sometimes it is an important question, how much memory does our DataFrame use? And there is no easy answer if you are working with PySpark. You can try to collect the data sample and run local memory profiler. You can estimate the size of the data in the source (for example, in parquet file). But we will go another way and try to analyze the logical plan of Spark from PySpark. In case when we are working with Scala Spark API we are able to work with resolved or unresolved logical plans and physical plan via a special API. But from PySpark API only string representation is available and we will work with it.
 ---
 
 * How to estimate a PySpark DataFrame size?
