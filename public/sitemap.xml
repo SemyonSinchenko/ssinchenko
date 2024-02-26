@@ -2,97 +2,97 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/ssinchenko/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/</loc>
     <lastmod>2024-02-25T12:00:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/categories/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/categories/</loc>
     <lastmod>2024-02-25T12:00:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/categories/data-engineering/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/categories/data-engineering/</loc>
     <lastmod>2024-02-25T12:00:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/maven/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/maven/</loc>
     <lastmod>2024-02-25T12:00:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/post/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/post/</loc>
     <lastmod>2024-02-25T12:00:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/scala/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/scala/</loc>
     <lastmod>2024-02-25T12:00:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/spark/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/spark/</loc>
     <lastmod>2024-02-25T12:00:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/post/multiple-spark-versions-with-maven/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/post/multiple-spark-versions-with-maven/</loc>
     <lastmod>2024-02-25T12:00:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/</loc>
     <lastmod>2024-02-25T12:00:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/post/how-databricks-14x-breaks-3dparty-compatibility/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/post/how-databricks-14x-breaks-3dparty-compatibility/</loc>
     <lastmod>2024-02-22T14:00:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/pyspark/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/pyspark/</loc>
     <lastmod>2024-02-22T14:00:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/post/pyspark-column-lineage/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/post/pyspark-column-lineage/</loc>
     <lastmod>2024-01-10T12:00:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/post/estimation-spark-df-size/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/post/estimation-spark-df-size/</loc>
     <lastmod>2023-11-23T23:27:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/bikepacking/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/bikepacking/</loc>
     <lastmod>2023-10-12T09:45:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/categories/bikepacking/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/categories/bikepacking/</loc>
     <lastmod>2023-10-12T09:45:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/cycling/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/cycling/</loc>
     <lastmod>2023-10-12T09:45:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/post/cycling-eastern-serbia/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/post/cycling-eastern-serbia/</loc>
     <lastmod>2023-10-12T09:45:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/serbia/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/serbia/</loc>
     <lastmod>2023-10-12T09:45:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/nixos/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/nixos/</loc>
     <lastmod>2023-09-29T17:29:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/categories/nixos/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/categories/nixos/</loc>
     <lastmod>2023-09-29T17:29:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/python/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/python/</loc>
     <lastmod>2023-09-29T17:29:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/post/using-pyenv-with-nixos/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/post/using-pyenv-with-nixos/</loc>
     <lastmod>2023-09-29T17:29:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/categories/ai/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/categories/ai/</loc>
     <lastmod>2023-04-06T14:11:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/documentation/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/documentation/</loc>
     <lastmod>2023-04-06T14:11:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/emacs/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/emacs/</loc>
     <lastmod>2023-04-06T14:11:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/post/generating-docs-with-gpt/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/post/generating-docs-with-gpt/</loc>
     <lastmod>2023-04-06T14:11:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/gpt/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/gpt/</loc>
     <lastmod>2023-04-06T14:11:05+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/hadoop/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/tags/hadoop/</loc>
     <lastmod>2023-03-30T00:21:28+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/post/working-with-fs-pyspark/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/post/working-with-fs-pyspark/</loc>
     <lastmod>2023-03-30T00:21:28+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/page/cv/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/page/cv/</loc>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/page/about/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/page/about/</loc>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/page/</loc>
+    <loc>https://semyonsinchenko.gihub.io/ssinchenko/page/</loc>
   </url>
 </urlset>
