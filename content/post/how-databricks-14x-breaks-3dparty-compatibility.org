@@ -17,6 +17,16 @@ summary: In this post, I want to discuss the groundbreaking changes in the lates
 
 I work for a company that is a customer of the Databricks platform. However, this blog post represents only my personal view and opinion and is not related to any official position of my employer or my employer's dissatisfaction with the service provided by Databricks.
 
+** Follow-up
+
+I had a very productive discussion with [[https://github.com/grundprinzip][Martin Grund]] and [[https://github.com/MrPowers][Matthew Powers]] from Databricks. I can summarize their points in the following list:
+
+1. The main reason for pushing =SparkConnect= into =DBR 14.x= is security. Also, calls to the underlying JVM were already restricted in =DBR 13.x=, so it should not change anything dramatically. Long story short, the libraries listed below would most likely not work on shared clusters even in =DBR 13.x=;
+2. Spark developers are not going to reimplement all the =py4j= interfaces. Instead of providing a generic way to work with the underlying JVM, they would prefer to support migration of existing libraries to =grpc=;
+3. We will work together to fill the existing gap in documentation on how to extend the =SparkConnect= protocol;
+
+If some of these points are not clear to you, I would recommend going deeper into the details of the blog post.
+
 ** Introduction: Spark-Connect
 
 When I saw the announcement of [[https://www.databricks.com/blog/2022/07/07/introducing-spark-connect-the-power-of-apache-spark-everywhere.html][Spark Connect]] for the first time, I had very controversial feelings. From one side, developers of PySpark applications are finally getting the ability to use the latest minor version of Python and not depend on the long list of PySpark dependencies and JVM. But from the other side, I was thinking about how 3d-party PySpark libraries should work with it?
