@@ -2,22 +2,22 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Documentation on Sem Sinchenko</title>
-    <link>https://semyonsinchenko.gihub.io/ssinchenko/tags/documentation/</link>
+    <link>http://localhost:1313/ssinchenko/tags/documentation/</link>
     <description>Recent content in Documentation on Sem Sinchenko</description>
     <image>
       <title>Sem Sinchenko</title>
-      <url>https://semyonsinchenko.gihub.io/ssinchenko/images/avatar-favicon.png</url>
-      <link>https://semyonsinchenko.gihub.io/ssinchenko/images/avatar-favicon.png</link>
+      <url>http://localhost:1313/ssinchenko/images/avatar-favicon.png</url>
+      <link>http://localhost:1313/ssinchenko/images/avatar-favicon.png</link>
     </image>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     <lastBuildDate>Thu, 06 Apr 2023 14:11:05 +0200</lastBuildDate>
-    <atom:link href="https://semyonsinchenko.gihub.io/ssinchenko/tags/documentation/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/ssinchenko/tags/documentation/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Generating docstrings with GPT</title>
-      <link>https://semyonsinchenko.gihub.io/ssinchenko/post/generating-docs-with-gpt/</link>
+      <link>http://localhost:1313/ssinchenko/post/generating-docs-with-gpt/</link>
       <pubDate>Thu, 06 Apr 2023 14:11:05 +0200</pubDate>
-      <guid>https://semyonsinchenko.gihub.io/ssinchenko/post/generating-docs-with-gpt/</guid>
+      <guid>http://localhost:1313/ssinchenko/post/generating-docs-with-gpt/</guid>
       <description>Generating Python docstrings with GPT and Emacs Motivation There is an open source library in which I&amp;#39;m a maintainer. And recently I committed to creating docstrings for all the public functions and methods. I heard that recent Large Language Models (LLM) are good enough in the annotation of texts and documenting of code so I decided to try to use one of OpenAI models to solve this problem. In this post I will use Emacs plugins and extensions to generate docstrings but most advises about which prompt is better to use are generic and may be used with different code editors and IDE&amp;#39;s.</description>
     </item>
   </channel>
