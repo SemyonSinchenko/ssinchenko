@@ -182,10 +182,6 @@ Our class has a public constructor just for simplicity. In reality, of course, i
 
 Our class has two fields, corresponding getters/setters, and a custom `toString'. In reality, of course, no one will wrap complex JVM logic in SparkConnect. But as you will see in the next sections, there is no fundamental difference in which method is called. So such a class is complex enough for our demo purposes.
 
-## SparkConnect Plugins in Java
-
-Some generic words about how to ... Like there are three main classes bla bla bla...
-
 ### Defining protobuf messages
 
 At first, to start any kind of `SparkConnect` extending we need to define contracts in the form of `protobuf` messages that are interpreted by Spark. We decided to use the following three use-cases:
