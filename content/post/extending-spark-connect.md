@@ -12,6 +12,7 @@ author:
   - "Sem Sinchenko"
 cover:
   image: "https://upload.wikimedia.org/wikipedia/commons/f/f3/Apache_Spark_logo.svg"
+summary: "This blog post presents a very detailed step-by-step guide on how to create a SparkConnect protocol extension in Java and call it from PySpark. It will also cover a topic about how to define all the necessary proto3 messages for it. At the end of this guide you will have a way to interact with Spark JVM from PySpark almost like you can with py4j in a non-connect version."
 ---
 
 ## Preface
