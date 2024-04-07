@@ -59,7 +59,7 @@ My blog contains the context mostly about three topics:
 2. Stories about my contribution to OSS projects
 3. Reports from my personal bikepacking tours
 
-About any questions related to this blog you can contact me via email: ssinchenko@pm.me
+About any questions related to this blog you can contact me via email: ssinchenko@apache.org
   """
 
 [[params.socialIcons]]
@@ -85,7 +85,7 @@ About any questions related to this blog you can contact me via email: ssinchenk
 [[params.socialIcons]]
   name = "email"
   title = "Contact me via email"
-  url = "mailto:ssinchenko@pm.me"
+  url = "mailto:ssinchenko@apache.org"
 
 
 [params.assets]
