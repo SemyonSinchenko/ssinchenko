@@ -18,8 +18,7 @@
       <link>http://localhost:1313/ssinchenko/post/extending-spark-connect/</link>
       <pubDate>Mon, 04 Mar 2024 12:30:57 +0100</pubDate>
       <guid>http://localhost:1313/ssinchenko/post/extending-spark-connect/</guid>
-      <description>Preface I would like to thank Martin Grund. He gave me a lot of useful advice during my work on this project!
-Introduction Recently, I published a post about potential compatibility issues between SparkConnect and 3d-party libraries that depend on py4j. After that post, people from Databricks contacted me and suggested we work together on this issue. With their help, I tried to create a step-by-step guide for newbies on how to extend SparkConnect and how to potentially migrate from py4j logic to writing protocol plugins.</description>
+      <description>This blog post presents a very detailed step-by-step guide on how to create a SparkConnect protocol extension in Java and call it from PySpark. It will also cover a topic about how to define all the necessary proto3 messages for it. At the end of this guide you will have a way to interact with Spark JVM from PySpark almost like you can with py4j in a non-connect version.</description>
     </item>
     <item>
       <title>Supporting multiple Apache Spark versions with Maven</title>

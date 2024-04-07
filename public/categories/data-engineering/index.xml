@@ -11,15 +11,21 @@
     </image>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 04 Mar 2024 12:30:57 +0100</lastBuildDate>
+    <lastBuildDate>Sun, 07 Apr 2024 16:01:25 +0200</lastBuildDate>
     <atom:link href="http://localhost:1313/ssinchenko/categories/data-engineering/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Computing ML Feature Store in PySpark</title>
+      <link>http://localhost:1313/ssinchenko/post/effective_feature_store_pyspark/</link>
+      <pubDate>Sun, 07 Apr 2024 16:01:25 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/effective_feature_store_pyspark/</guid>
+      <description>In this blog post, I will share my experience in building an ML Feature Store using PySpark. I will demonstrate how one can utilize case-when expressions to generate multiple aggregations with minimal data shuffling across the cluster. This approach is significantly more efficient than the naive method of using a combination of groupBy and pivot for generating aggregations (or features in ML terms).</description>
+    </item>
     <item>
       <title>Extending Spark Connect</title>
       <link>http://localhost:1313/ssinchenko/post/extending-spark-connect/</link>
       <pubDate>Mon, 04 Mar 2024 12:30:57 +0100</pubDate>
       <guid>http://localhost:1313/ssinchenko/post/extending-spark-connect/</guid>
-      <description>Preface I would like to thank Martin Grund. He gave me a lot of useful advice during my work on this project!
-Introduction Recently, I published a post about potential compatibility issues between SparkConnect and 3d-party libraries that depend on py4j. After that post, people from Databricks contacted me and suggested we work together on this issue. With their help, I tried to create a step-by-step guide for newbies on how to extend SparkConnect and how to potentially migrate from py4j logic to writing protocol plugins.</description>
+      <description>This blog post presents a very detailed step-by-step guide on how to create a SparkConnect protocol extension in Java and call it from PySpark. It will also cover a topic about how to define all the necessary proto3 messages for it. At the end of this guide you will have a way to interact with Spark JVM from PySpark almost like you can with py4j in a non-connect version.</description>
     </item>
     <item>
       <title>Supporting multiple Apache Spark versions with Maven</title>

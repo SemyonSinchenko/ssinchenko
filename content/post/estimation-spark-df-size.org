@@ -128,6 +128,9 @@ This is not what we expected, is it? An ~EiB~ is something like \(\simeq 10^6\) 
 ** Finalized code
 
 #+begin_src python
+  import contextlib
+  import io
+
   from pyspark.sql import DataFrame
 
   def _bytes2mb(bb: float) -> float:

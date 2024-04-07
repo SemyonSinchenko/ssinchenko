@@ -3,30 +3,33 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://localhost:1313/ssinchenko/</loc>
-    <lastmod>2024-03-04T12:30:57+01:00</lastmod>
+    <lastmod>2024-04-07T16:01:25+02:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/ssinchenko/categories/</loc>
-    <lastmod>2024-03-04T12:30:57+01:00</lastmod>
+    <lastmod>2024-04-07T16:01:25+02:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/ssinchenko/post/effective_feature_store_pyspark/</loc>
+    <lastmod>2024-04-07T16:01:25+02:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/ssinchenko/categories/data-engineering/</loc>
-    <lastmod>2024-03-04T12:30:57+01:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/ssinchenko/post/extending-spark-connect/</loc>
-    <lastmod>2024-03-04T12:30:57+01:00</lastmod>
+    <lastmod>2024-04-07T16:01:25+02:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/ssinchenko/post/</loc>
-    <lastmod>2024-03-04T12:30:57+01:00</lastmod>
+    <lastmod>2024-04-07T16:01:25+02:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/ssinchenko/tags/pyspark/</loc>
+    <lastmod>2024-04-07T16:01:25+02:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/ssinchenko/tags/</loc>
+    <lastmod>2024-04-07T16:01:25+02:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/ssinchenko/post/extending-spark-connect/</loc>
     <lastmod>2024-03-04T12:30:57+01:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/ssinchenko/tags/spark/</loc>
     <lastmod>2024-03-04T12:30:57+01:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/ssinchenko/tags/spark-connect/</loc>
-    <lastmod>2024-03-04T12:30:57+01:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/ssinchenko/tags/</loc>
     <lastmod>2024-03-04T12:30:57+01:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/ssinchenko/tags/maven/</loc>

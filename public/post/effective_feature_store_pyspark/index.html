@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/ssinchenko/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=ssinchenko/livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Computing ML Feature Store in PySpark | Sem Sinchenko</title>
+<meta name="keywords" content="pyspark">
+<meta name="description" content="In this blog post, I will share my experience in building an ML Feature Store using PySpark. I will demonstrate how one can utilize case-when expressions to generate multiple aggregations with minimal data shuffling across the cluster. This approach is significantly more efficient than the naive method of using a combination of groupBy and pivot for generating aggregations (or features in ML terms).">
+<meta name="author" content="Sem Sinchenko">
+<link rel="canonical" href="http://localhost:1313/ssinchenko/post/effective_feature_store_pyspark/">
+<link crossorigin="anonymous" href="/ssinchenko/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/ssinchenko/images/fav/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/ssinchenko/images/fav/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/ssinchenko/images/fav/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/ssinchenko/images/fav/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/ssinchenko/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/ssinchenko/post/effective_feature_store_pyspark/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="Computing ML Feature Store in PySpark" />
+<meta property="og:description" content="In this blog post, I will share my experience in building an ML Feature Store using PySpark. I will demonstrate how one can utilize case-when expressions to generate multiple aggregations with minimal data shuffling across the cluster. This approach is significantly more efficient than the naive method of using a combination of groupBy and pivot for generating aggregations (or features in ML terms)." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/ssinchenko/post/effective_feature_store_pyspark/" />
+<meta property="og:image" content="http://localhost:1313/ssinchenko/images/feature_store/FS%20Diagram.drawio.png" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2024-04-07T16:01:25+02:00" />
+<meta property="article:modified_time" content="2024-04-07T16:01:25+02:00" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="http://localhost:1313/ssinchenko/images/feature_store/FS%20Diagram.drawio.png" />
+<meta name="twitter:title" content="Computing ML Feature Store in PySpark"/>
+<meta name="twitter:description" content="In this blog post, I will share my experience in building an ML Feature Store using PySpark. I will demonstrate how one can utilize case-when expressions to generate multiple aggregations with minimal data shuffling across the cluster. This approach is significantly more efficient than the naive method of using a combination of groupBy and pivot for generating aggregations (or features in ML terms)."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/ssinchenko/post/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Computing ML Feature Store in PySpark",
+      "item": "http://localhost:1313/ssinchenko/post/effective_feature_store_pyspark/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Computing ML Feature Store in PySpark",
+  "name": "Computing ML Feature Store in PySpark",
+  "description": "In this blog post, I will share my experience in building an ML Feature Store using PySpark. I will demonstrate how one can utilize case-when expressions to generate multiple aggregations with minimal data shuffling across the cluster. This approach is significantly more efficient than the naive method of using a combination of groupBy and pivot for generating aggregations (or features in ML terms).",
+  "keywords": [
+    "pyspark"
+  ],
+  "articleBody": "Introduction In the rapidly evolving world of machine learning (ML), data scientists and ML engineers face a common challenge: efficiently managing and reusing features across multiple models. Feature engineering, a crucial step in the ML development process, can be time-consuming and repetitive, leading to delays in model deployment and reduced productivity. This is where the concept of an ML Feature Store comes into play.\nAn ML Feature Store is a centralized repository that allows teams to store, manage, and access features used in ML models. It acts as a single source of truth for feature data, enabling different ML models to reuse the same features without the need for :wredundant feature engineering efforts. By providing a unified interface for storing and retrieving features, a Feature Store streamlines the ML development process and significantly reduces the time-to-market for new models.\nOne of the key benefits of a Feature Store is its ability to promote feature reuse across multiple models. Instead of each model having its own siloed feature set, a Feature Store allows features to be shared and reused by different models. This not only saves time and effort in feature engineering but also ensures consistency and maintainability across the ML ecosystem.\nML Feature Store top level architecture Feature Store based on customers behaviour In the realm of customer interaction-based features, these features are typically aggregates of various interactions, such as the number of logins, clicks, or average spending from a credit card, calculated over different time periods and grouped by specific categories.\nFor instance, a Feature Store can be used to create features like the amount of logins in the mobile category for the last three months or the average spending in the grocery category from a credit card with the type “Credit Card.” These features provide valuable insights into customer behavior and preferences, which can be leveraged by machine learning models to make informed predictions and drive personalized experiences.\nIn the following sections, we will delve deeper into the specific use case of creating features based on customer interactions using PySpark.\nTechnical introduction One might say that creating such a feature store requires working with window functions because of the time component, but time intervals can easily be encoded as group columns, so the task is just to calculate different aggregates (sum, count, average, etc.) over different group combinations. For example, if we have a timeline column, say login_date, and we need to calculate aggregates for the last week, month, and six months, it is easy to create additional columns with flags to avoid window functions:\nfrom pyspark.sql import functions as F data_with_flags = ( data .withColumn( \"last_week_flag\", (F.datadiff(F.current_date(), F.col(\"login_date\")) \u003c= F.lit(7)) ) .withColumn( \"last_month_flag\", (F.datadiff(F.current_date(), F.col(\"login_date\")) \u003c= F.lit(30.5)) ) .withColumn( \"last_six_month_flag\", (F.datadiff(F.current_date(), F.col(\"login_date\")) \u003c= F.lit(30.5 * 6)) ) ) So, the task of calculation of a single batch of the Feture Store table can be transformed into the generic task of aggregations over multiple groups. Let’s use H2O benchmark dataset as an example:\nfrom pyspark.sql import SparkSession spark = ( SparkSession.builder .master(\"local[*]\") .getOrCreate() ) schema = T.StructType.fromJson( {'type': 'struct', 'fields': [{'name': 'id1', 'type': 'string', 'nullable': True, 'metadata': {}}, {'name': 'id2', 'type': 'string', 'nullable': True, 'metadata': {}}, {'name': 'id3', 'type': 'string', 'nullable': True, 'metadata': {}}, {'name': 'id4', 'type': 'integer', 'nullable': True, 'metadata': {}}, {'name': 'id5', 'type': 'integer', 'nullable': True, 'metadata': {}}, {'name': 'id6', 'type': 'integer', 'nullable': True, 'metadata': {}}, {'name': 'v1', 'type': 'integer', 'nullable': True, 'metadata': {}}, {'name': 'v2', 'type': 'integer', 'nullable': True, 'metadata': {}}, {'name': 'v3', 'type': 'double', 'nullable': True, 'metadata': {}}]} ) data = ( spark.read .option(\"header\", \"true\") .schema(schema) .csv(\"data/G1_1e6_1e6_10_0.csv\") ) data.show() Result:\n+-----+-----+------------+---+---+-----+---+---+--------+ | id1| id2| id3|id4|id5| id6| v1| v2| v3| +-----+-----+------------+---+---+-----+---+---+--------+ |id008|id006|id0000098213| 6| 1| 9802| 1| 9|34.51913| |id007|id003|id0000022646| 8| 1|20228| 1| 4|64.95154| |id008|id004|id0000083470| 1| 6| 2125| 1| 8|43.23634| |id009|id006|id0000051855| 5| 8|41429| 1| 12|27.36826| |id005|id007|id0000074629| 10| 1|71480| 2| 15|65.04233| |id001|id009|id0000045958| 6| 2|30060| 5| 8|16.57359| |id009|id008|id0000060869| 10| 10|95489| 4| 8|60.78273| |id010|id010|id0000015471| 3| 2|53762| 5| 11|40.72817| |id008|id009|id0000032117| 10| 7|37774| 4| 2| 7.48368| |id006|id001|id0000064092| 4| 5|64203| 1| 15|79.79128| |id001|id001|id0000041819| 3| 3|91110| 2| 11|34.33383| |id005|id004|id0000097955| 3| 6|95321| 5| 7|32.20545| |id009|id005|id0000004865| 6| 10|54982| 3| 8| 3.07528| |id008|id009|id0000060610| 8| 10|31843| 1| 8|37.05268| |id009|id009|id0000008902| 8| 9| 9394| 4| 13|23.04208| |id006|id004|id0000044586| 6| 6| 5279| 2| 6|49.30788| |id007|id007|id0000015887| 10| 1| 2987| 2| 1|66.90033| |id007|id003|id0000039177| 2| 3|85798| 4| 2|31.13281| |id002|id004|id0000066644| 9| 1|57709| 1| 12|53.35556| |id006|id003|id0000064335| 7| 5|38365| 2| 7|59.54201| +-----+-----+------------+---+---+-----+---+---+--------+ The entire data set has 1,000,000 rows. Here we have the column id3 which is a string and has ~100,000 unique values. This column represents a unique key, for example a customer id. The columns id1', id2’, id4', id5’ have 10 unique but independent values and will represent our grouping keys, like time interval flag and different categories.\nTo reproduce my experiment, you can use the farsante library, which contains effective H2O dataset generators written in Rust. See the documentation for details. I used the rust cli api of farsante and the following commands to genrate this dataset:\ncargo build --release cd target/release ./farsante --n 1000000 --k 10 GroupBy + Pivot approach Our goal is to take our initial data with 9 columns and 1,000,000 rows and create a feature table with 121 columns and 100,000 rows. In this case, 121 columns contains\nid column (\"id3\") count(\"*\"), sum(\"v2\"), avg(\"v3\") for all unique values of column id1 (3 * 10 = 30 columns) count(\"*\"), sum(\"v2\"), avg(\"v3\") for all unique values of col id2 (3 * 10 = 30 cols) count(\"*\"), sum(\"v2\"), avg(\"v3\") for all unique values of col id4 (3 * 10 = 30 cols) count(\"*\"), sum(\"v2\"), avg(\"v3\") for all unique values of col id5 (3 * 10 = 30 cols) 120 + 1 columns in total. We will only touch on the simplest case, without touching on the topic of combinations of group values. But as you will see, our code is easily extendable to this case. We need to create a structure with columns that contain values of group keys in their names. The most obvious way to do this is to simply use groupBy + pivot in PySpark. But since we are talking about a production-like pipeline, the output schema of our table should not depend on the input data, so we need to fix the values of the group keys before computing anything. In our example, we can infer these values, but in production, of course, it is strongly recommended to fix these values at the level of pipeline configuration files. Otherwise, you could easily shoot yourself in the foot one day when a new group key comes along and breaks your table schema.\ngroups = { \"id1\": [d[0] for d in data.select(F.col(\"id1\")).distinct().collect()], \"id2\": [d[0] for d in data.select(F.col(\"id2\")).distinct().collect()], \"id4\": [d[0] for d in data.select(F.col(\"id4\")).distinct().collect()], \"id5\": [d[0] for d in data.select(F.col(\"id5\")).distinct().collect()], } PRIMARY_KEY = \"id3\" By using this structure it is easy to write the naive groupBy-pivot way:\nPRIMARY_KEY = “id3”\nBy using this structure it is easy to write the ```pythonnaive groupBy-pivot way:\nfrom functools import reduce def naive_fs(data, groups): pre_result = [] for grp_col in groups.keys(): pre_result.append( data .groupBy(PRIMARY_KEY) .pivot(grp_col, groups[grp_col]) .agg( F.count(\"v1\").alias(f\"_valof_{grp_col}_count_v1\"), F.sum(\"v2\").alias(f\"valof_{grp_col}_sum_v2\"), F.mean(\"v3\").alias(f\"valof_{grp_col}_avg_v3\"), ) ) return reduce(lambda a, b: a.join(b, on=[PRIMARY_KEY], how=\"left\"), pre_result) Let’s see how fast it produce our tiny dataset with one million of rows:\n%%time naive_fs(data, groups).write.mode(\"overwrite\").parquet(\"tmp/naive_output\") Results (each run means a full restart of SparkSession to avoid getting confusing results due to disk hashing or AQE optimizations):\nRun N1: CPU times: user 44.5 ms, sys: 9.43 ms, total: 53.9 ms Wall time: 21.8 s Run N2: CPU times: user 41.1 ms, sys: 11.3 ms, total: 52.4 ms Wall time: 20.2 s Run N3: CPU times: user 49.3 ms, sys: 7.53 ms, total: 56.8 ms Wall time: 21.8 s Spark Plan analysis Opening a Spark plan shows me that in this case Spark actually does three sort-merge joins. Trying the same code but with 10 million rows dataset will get stuck and fail with Java heap space (on distributed cluster it will transform into huge data spill and most likely fail due to disk space or even it may brake the whole cluster if it is not protected from disk overflow).\nCase-when approach Another approach is to use the CASE-WHEN approach. For example, to compute the count(*) over some group, we can avoid using groupBy' at all, just because the count of rows related to some value valof a group key is just a sum over aCASE-WHENexpression like this:F.sum(F.when(F.col(“grp_key”) == F.lit(val), F.lit(1)).otherwise(F.lit(0))). In this case, we use case-when to return 1 for all rows related to the group and zero otherwise. The sum over such a result is obviously equal to the number of rows related to the value of the group. To calculate sumwe can use the value of the sum column for rows related to the group and zero otherwise. To calculate the average, we need to replace unrelated rows withnull`, because the built-in Spark averaging function ignores null. You can check the documentation to understand how to calculate other types of aggregates.\nLet’s write the code, that generate our aggragations for H2O dataset:\ndef case_when_fs(data, groups): cols_list = [] for grp_col, values in groups.items(): for val in values: cond = F.col(grp_col) == F.lit(val) cols_list.append( F.sum(F.when(cond, F.lit(1)).otherwise(F.lit(0))).alias(f\"{val}_valof_{grp_col}_count_v1\") ) cols_list.append( F.sum(F.when(cond, F.col(\"v2\")).otherwise(F.lit(0))).alias(f\"{val}_valof_{grp_col}_sum_v2\") ) cols_list.append( F.mean(F.when(cond, F.col(\"v2\")).otherwise(F.lit(None))).alias(f\"{val}_valof_{grp_col}_avg_v3\") ) return data.groupby(PRIMARY_KEY).agg(*cols_list) We will run the same test with write for that approach:\n%%time case_when_fs(data, groups).write.mode(\"overwrite\").parquet(\"tmp/case_when_output\") Results:\nRun N1: CPU times: user 157 ms, sys: 40.5 ms, total: 198 ms Wall time: 13.9 s Run N2: CPU times: user 176 ms, sys: 35.6 ms, total: 211 ms Wall time: 14.3 s Run N3: CPU times: user 192 ms, sys: 41.3 ms, total: 233 ms Wall time: 16.9 s Spark Plan analysis In this case, there are no sort-merge-join operations in the plan. The calculation is almost x1.5 faster. Also, this code will work in the case of 10 million rows without errors (out-of-core case) without disk spill and Java heap space errors. Also, this approach give you more prciese control over the variable names, groups combinations, etc.\nConclusion The described above case is quite specific, but still very offen. And it is a nice example, how engineers can use domain knowledge about keys distribution, required output, etc. to write less generic but more effective code!\n",
+  "wordCount" : "1687",
+  "inLanguage": "en",
+  "image":"http://localhost:1313/ssinchenko/images/feature_store/FS%20Diagram.drawio.png","datePublished": "2024-04-07T16:01:25+02:00",
+  "dateModified": "2024-04-07T16:01:25+02:00",
+  "author":[{
+    "@type": "Person",
+    "name": "Sem Sinchenko"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/ssinchenko/post/effective_feature_store_pyspark/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Sem Sinchenko",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/ssinchenko/images/fav/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/ssinchenko/" accesskey="h" title="Sem Sinchenko (Alt + H)">Sem Sinchenko</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/ssinchenko/" title="Blog">
+                    <span>Blog</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/ssinchenko/page/about/" title="About">
+                    <span>About</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/ssinchenko/page/cv/" title="CV">
+                    <span>CV</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/ssinchenko/categories" title="Categories">
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/ssinchenko/tags" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Computing ML Feature Store in PySpark
+    </h1>
+    <div class="post-meta"><span title='2024-04-07 16:01:25 +0200 CEST'>April 7, 2024</span>&nbsp;·&nbsp;8 min&nbsp;·&nbsp;Sem Sinchenko
+
+</div>
+  </header> 
+<figure class="entry-cover"><img loading="eager" src="http://localhost:1313/ssinchenko/images/feature_store/FS%20Diagram.drawio.png" alt="">
+        
+</figure>
+  <div class="post-content"><h2 id="introduction">Introduction<a hidden class="anchor" aria-hidden="true" href="#introduction">#</a></h2>
+<p>In the rapidly evolving world of machine learning (ML), data scientists and ML engineers face a common challenge: efficiently managing and reusing features across multiple models. Feature engineering, a crucial step in the ML development process, can be time-consuming and repetitive, leading to delays in model deployment and reduced productivity. This is where the concept of an ML Feature Store comes into play.</p>
+<p>An ML Feature Store is a centralized repository that allows teams to store, manage, and access features used in ML models. It acts as a single source of truth for feature data, enabling different ML models to reuse the same features without the need for :wredundant feature engineering efforts. By providing a unified interface for storing and retrieving features, a Feature Store streamlines the ML development process and significantly reduces the time-to-market for new models.</p>
+<p>One of the key benefits of a Feature Store is its ability to promote feature reuse across multiple models. Instead of each model having its own siloed feature set, a Feature Store allows features to be shared and reused by different models. This not only saves time and effort in feature engineering but also ensures consistency and maintainability across the ML ecosystem.</p>
+<figure>
+    <img loading="lazy" src="/ssinchenko/images/feature_store/FS%20Diagram.drawio.png"
+         alt="Feature Store Architecture" width="600px"/> <figcaption>
+            ML Feature Store top level architecture
+        </figcaption>
+</figure>
+
+<h2 id="feature-store-based-on-customers-behaviour">Feature Store based on customers behaviour<a hidden class="anchor" aria-hidden="true" href="#feature-store-based-on-customers-behaviour">#</a></h2>
+<p>In the realm of customer interaction-based features, these features are typically aggregates of various interactions, such as the number of logins, clicks, or average spending from a credit card, calculated over different time periods and grouped by specific categories.</p>
+<p>For instance, a Feature Store can be used to create features like the amount of logins in the mobile category for the last three months or the average spending in the grocery category from a credit card with the type &ldquo;Credit Card.&rdquo; These features provide valuable insights into customer behavior and preferences, which can be leveraged by machine learning models to make informed predictions and drive personalized experiences.</p>
+<p>In the following sections, we will delve deeper into the specific use case of creating features based on customer interactions using PySpark.</p>
+<h2 id="technical-introduction">Technical introduction<a hidden class="anchor" aria-hidden="true" href="#technical-introduction">#</a></h2>
+<p>One might say that creating such a feature store requires working with window functions because of the time component, but time intervals can easily be encoded as group columns, so the task is just to calculate different aggregates (sum, count, average, etc.) over different group combinations. For example, if we have a timeline column, say <code>login_date</code>, and we need to calculate aggregates for the last week, month, and six months, it is easy to create additional columns with flags to avoid window functions:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="kn">import</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">data_with_flags</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">  <span class="n">data</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;last_week_flag&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">datadiff</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">current_date</span><span class="p">(),</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;login_date&#34;</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="mi">7</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">  <span class="p">)</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;last_month_flag&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">datadiff</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">current_date</span><span class="p">(),</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;login_date&#34;</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="mf">30.5</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">  <span class="p">)</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;last_six_month_flag&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">datadiff</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">current_date</span><span class="p">(),</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;login_date&#34;</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="mf">30.5</span> <span class="o">*</span> <span class="mi">6</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">  <span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span></code></pre></div><p>So, the task of calculation of a single batch of the Feture Store table can be transformed into the generic task of aggregations over multiple groups. Let&rsquo;s use H2O benchmark dataset as an example:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="kn">import</span> <span class="n">SparkSession</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">spark</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span>
+</span></span><span class="line"><span class="cl">    <span class="o">.</span><span class="n">master</span><span class="p">(</span><span class="s2">&#34;local[*]&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">schema</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">StructType</span><span class="o">.</span><span class="n">fromJson</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;struct&#39;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;id1&#39;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">       <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">       <span class="s1">&#39;nullable&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">       <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{}},</span>
+</span></span><span class="line"><span class="cl">      <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;id2&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;nullable&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{}},</span>
+</span></span><span class="line"><span class="cl">      <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;id3&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="s1">&#39;nullable&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{}},</span>
+</span></span><span class="line"><span class="cl">      <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;id4&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span><span class="p">,</span> <span class="s1">&#39;nullable&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{}},</span>
+</span></span><span class="line"><span class="cl">      <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;id5&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span><span class="p">,</span> <span class="s1">&#39;nullable&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{}},</span>
+</span></span><span class="line"><span class="cl">      <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;id6&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span><span class="p">,</span> <span class="s1">&#39;nullable&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{}},</span>
+</span></span><span class="line"><span class="cl">      <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;v1&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span><span class="p">,</span> <span class="s1">&#39;nullable&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{}},</span>
+</span></span><span class="line"><span class="cl">      <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;v2&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;integer&#39;</span><span class="p">,</span> <span class="s1">&#39;nullable&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{}},</span>
+</span></span><span class="line"><span class="cl">      <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;v3&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="s1">&#39;nullable&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{}}]}</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">data</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">  <span class="n">spark</span><span class="o">.</span><span class="n">read</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s2">&#34;header&#34;</span><span class="p">,</span> <span class="s2">&#34;true&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">csv</span><span class="p">(</span><span class="s2">&#34;data/G1_1e6_1e6_10_0.csv&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">data</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></span></code></pre></div><p>Result:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">+-----+-----+------------+---+---+-----+---+---+--------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span>  id1<span class="p">|</span>  id2<span class="p">|</span>         id3<span class="p">|</span>id4<span class="p">|</span>id5<span class="p">|</span>  id6<span class="p">|</span> v1<span class="p">|</span> v2<span class="p">|</span>      v3<span class="p">|</span>
+</span></span><span class="line"><span class="cl">+-----+-----+------------+---+---+-----+---+---+--------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id008<span class="p">|</span>id006<span class="p">|</span>id0000098213<span class="p">|</span>  6<span class="p">|</span>  1<span class="p">|</span> 9802<span class="p">|</span>  1<span class="p">|</span>  9<span class="p">|</span>34.51913<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id007<span class="p">|</span>id003<span class="p">|</span>id0000022646<span class="p">|</span>  8<span class="p">|</span>  1<span class="p">|</span>20228<span class="p">|</span>  1<span class="p">|</span>  4<span class="p">|</span>64.95154<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id008<span class="p">|</span>id004<span class="p">|</span>id0000083470<span class="p">|</span>  1<span class="p">|</span>  6<span class="p">|</span> 2125<span class="p">|</span>  1<span class="p">|</span>  8<span class="p">|</span>43.23634<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id009<span class="p">|</span>id006<span class="p">|</span>id0000051855<span class="p">|</span>  5<span class="p">|</span>  8<span class="p">|</span>41429<span class="p">|</span>  1<span class="p">|</span> 12<span class="p">|</span>27.36826<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id005<span class="p">|</span>id007<span class="p">|</span>id0000074629<span class="p">|</span> 10<span class="p">|</span>  1<span class="p">|</span>71480<span class="p">|</span>  2<span class="p">|</span> 15<span class="p">|</span>65.04233<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id001<span class="p">|</span>id009<span class="p">|</span>id0000045958<span class="p">|</span>  6<span class="p">|</span>  2<span class="p">|</span>30060<span class="p">|</span>  5<span class="p">|</span>  8<span class="p">|</span>16.57359<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id009<span class="p">|</span>id008<span class="p">|</span>id0000060869<span class="p">|</span> 10<span class="p">|</span> 10<span class="p">|</span>95489<span class="p">|</span>  4<span class="p">|</span>  8<span class="p">|</span>60.78273<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id010<span class="p">|</span>id010<span class="p">|</span>id0000015471<span class="p">|</span>  3<span class="p">|</span>  2<span class="p">|</span>53762<span class="p">|</span>  5<span class="p">|</span> 11<span class="p">|</span>40.72817<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id008<span class="p">|</span>id009<span class="p">|</span>id0000032117<span class="p">|</span> 10<span class="p">|</span>  7<span class="p">|</span>37774<span class="p">|</span>  4<span class="p">|</span>  2<span class="p">|</span> 7.48368<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id006<span class="p">|</span>id001<span class="p">|</span>id0000064092<span class="p">|</span>  4<span class="p">|</span>  5<span class="p">|</span>64203<span class="p">|</span>  1<span class="p">|</span> 15<span class="p">|</span>79.79128<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id001<span class="p">|</span>id001<span class="p">|</span>id0000041819<span class="p">|</span>  3<span class="p">|</span>  3<span class="p">|</span>91110<span class="p">|</span>  2<span class="p">|</span> 11<span class="p">|</span>34.33383<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id005<span class="p">|</span>id004<span class="p">|</span>id0000097955<span class="p">|</span>  3<span class="p">|</span>  6<span class="p">|</span>95321<span class="p">|</span>  5<span class="p">|</span>  7<span class="p">|</span>32.20545<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id009<span class="p">|</span>id005<span class="p">|</span>id0000004865<span class="p">|</span>  6<span class="p">|</span> 10<span class="p">|</span>54982<span class="p">|</span>  3<span class="p">|</span>  8<span class="p">|</span> 3.07528<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id008<span class="p">|</span>id009<span class="p">|</span>id0000060610<span class="p">|</span>  8<span class="p">|</span> 10<span class="p">|</span>31843<span class="p">|</span>  1<span class="p">|</span>  8<span class="p">|</span>37.05268<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id009<span class="p">|</span>id009<span class="p">|</span>id0000008902<span class="p">|</span>  8<span class="p">|</span>  9<span class="p">|</span> 9394<span class="p">|</span>  4<span class="p">|</span> 13<span class="p">|</span>23.04208<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id006<span class="p">|</span>id004<span class="p">|</span>id0000044586<span class="p">|</span>  6<span class="p">|</span>  6<span class="p">|</span> 5279<span class="p">|</span>  2<span class="p">|</span>  6<span class="p">|</span>49.30788<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id007<span class="p">|</span>id007<span class="p">|</span>id0000015887<span class="p">|</span> 10<span class="p">|</span>  1<span class="p">|</span> 2987<span class="p">|</span>  2<span class="p">|</span>  1<span class="p">|</span>66.90033<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id007<span class="p">|</span>id003<span class="p">|</span>id0000039177<span class="p">|</span>  2<span class="p">|</span>  3<span class="p">|</span>85798<span class="p">|</span>  4<span class="p">|</span>  2<span class="p">|</span>31.13281<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id002<span class="p">|</span>id004<span class="p">|</span>id0000066644<span class="p">|</span>  9<span class="p">|</span>  1<span class="p">|</span>57709<span class="p">|</span>  1<span class="p">|</span> 12<span class="p">|</span>53.35556<span class="p">|</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>id006<span class="p">|</span>id003<span class="p">|</span>id0000064335<span class="p">|</span>  7<span class="p">|</span>  5<span class="p">|</span>38365<span class="p">|</span>  2<span class="p">|</span>  7<span class="p">|</span>59.54201<span class="p">|</span>
+</span></span><span class="line"><span class="cl">+-----+-----+------------+---+---+-----+---+---+--------+
+</span></span></code></pre></div><p>The entire data set has 1,000,000 rows. Here we have the column <code>id3</code> which is a string and has ~100,000 unique values. This column represents a unique key, for example a customer id. The columns <code>id1', </code>id2&rsquo;, <code>id4', </code>id5&rsquo; have 10 unique but independent values and will represent our grouping keys, like time interval flag and different categories.</p>
+<p>To reproduce my experiment, you can use the <a href="https://github.com/MrPowers/farsante">farsante library</a>, which contains effective H2O dataset generators written in Rust. See the <a href="https://github.com/MrPowers/farsante?tab=readme-ov-file#python">documentation</a> for details. I used the rust cli api of farsante and the following commands to genrate this dataset:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">cargo build --release
+</span></span><span class="line"><span class="cl"><span class="nb">cd</span> target/release
+</span></span><span class="line"><span class="cl">./farsante --n <span class="m">1000000</span> --k <span class="m">10</span>
+</span></span></code></pre></div><h2 id="groupby--pivot-approach">GroupBy + Pivot approach<a hidden class="anchor" aria-hidden="true" href="#groupby--pivot-approach">#</a></h2>
+<p>Our goal is to take our initial data with 9 columns and 1,000,000 rows and create a feature table with 121 columns and 100,000 rows. In this case, 121 columns contains</p>
+<ol>
+<li>id column (<code>&quot;id3&quot;</code>)</li>
+<li><code>count(&quot;*&quot;), sum(&quot;v2&quot;), avg(&quot;v3&quot;)</code> for all unique values of column id1 (3 * 10 = 30 columns)</li>
+<li><code>count(&quot;*&quot;), sum(&quot;v2&quot;), avg(&quot;v3&quot;)</code> for all unique values of col id2 (3 * 10 = 30 cols)</li>
+<li><code>count(&quot;*&quot;), sum(&quot;v2&quot;), avg(&quot;v3&quot;)</code> for all unique values of col id4 (3 * 10 = 30 cols)</li>
+<li><code>count(&quot;*&quot;), sum(&quot;v2&quot;), avg(&quot;v3&quot;)</code> for all unique values of col id5 (3 * 10 = 30 cols)</li>
+</ol>
+<p>120 + 1 columns in total. We will only touch on the simplest case, without touching on the topic of combinations of group values. But as you will see, our code is easily extendable to this case. We need to create a structure with columns that contain values of group keys in their names. The most obvious way to do this is to simply use <code>groupBy</code> + <code>pivot</code> in PySpark. But since we are talking about a production-like pipeline, the output schema of our table should not depend on the input data, so we need to fix the values of the group keys before computing anything. In our example, we can infer these values, but in production, of course, it is strongly recommended to fix these values at the level of pipeline configuration files. Otherwise, you could easily shoot yourself in the foot one day when a new group key comes along and breaks your table schema.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="n">groups</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;id1&#34;</span><span class="p">:</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;id1&#34;</span><span class="p">))</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">()],</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;id2&#34;</span><span class="p">:</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;id2&#34;</span><span class="p">))</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">()],</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;id4&#34;</span><span class="p">:</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;id4&#34;</span><span class="p">))</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">()],</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;id5&#34;</span><span class="p">:</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;id5&#34;</span><span class="p">))</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span><span class="o">.</span><span class="n">collect</span><span class="p">()],</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">PRIMARY_KEY</span> <span class="o">=</span> <span class="s2">&#34;id3&#34;</span>
+</span></span></code></pre></div><p>By using this structure it is easy to write the naive groupBy-pivot way:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"></code></pre></div><p>PRIMARY_KEY = &ldquo;id3&rdquo;</p>
+<p>By using this structure it is easy to write the ```pythonnaive groupBy-pivot way:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">naive_fs</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">pre_result</span> <span class="o">=</span> <span class="p">[]</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">grp_col</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">        <span class="n">pre_result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">            <span class="n">data</span>
+</span></span><span class="line"><span class="cl">            <span class="o">.</span><span class="n">groupBy</span><span class="p">(</span><span class="n">PRIMARY_KEY</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="o">.</span><span class="n">pivot</span><span class="p">(</span><span class="n">grp_col</span><span class="p">,</span> <span class="n">groups</span><span class="p">[</span><span class="n">grp_col</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl">            <span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">                <span class="n">F</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&#34;v1&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;_valof_</span><span class="si">{</span><span class="n">grp_col</span><span class="si">}</span><span class="s2">_count_v1&#34;</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">                <span class="n">F</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s2">&#34;v2&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;valof_</span><span class="si">{</span><span class="n">grp_col</span><span class="si">}</span><span class="s2">_sum_v2&#34;</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">                <span class="n">F</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s2">&#34;v3&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;valof_</span><span class="si">{</span><span class="n">grp_col</span><span class="si">}</span><span class="s2">_avg_v3&#34;</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">            <span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="n">PRIMARY_KEY</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s2">&#34;left&#34;</span><span class="p">),</span> <span class="n">pre_result</span><span class="p">)</span>
+</span></span></code></pre></div><p>Let&rsquo;s see how fast it produce our tiny dataset with one million of rows:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="o">%%</span><span class="n">time</span>
+</span></span><span class="line"><span class="cl"><span class="n">naive_fs</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&#34;overwrite&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;tmp/naive_output&#34;</span><span class="p">)</span>
+</span></span></code></pre></div><p>Results (each run means a full restart of <code>SparkSession</code> to avoid getting confusing results due to disk hashing or AQE optimizations):</p>
+<ul>
+<li>Run N1:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">CPU times: user 44.5 ms, sys: 9.43 ms, total: 53.9 ms
+</span></span><span class="line"><span class="cl">Wall time: 21.8 s
+</span></span></code></pre></div><ul>
+<li>Run N2:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">CPU times: user 41.1 ms, sys: 11.3 ms, total: 52.4 ms
+</span></span><span class="line"><span class="cl">Wall time: 20.2 s
+</span></span></code></pre></div><ul>
+<li>Run N3:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">CPU times: user 49.3 ms, sys: 7.53 ms, total: 56.8 ms
+</span></span><span class="line"><span class="cl">Wall time: 21.8 s
+</span></span></code></pre></div><h3 id="spark-plan-analysis">Spark Plan analysis<a hidden class="anchor" aria-hidden="true" href="#spark-plan-analysis">#</a></h3>
+<p>Opening a Spark plan shows me that in this case Spark actually does three sort-merge joins. Trying the same code but with 10 million rows dataset will get stuck and fail with Java heap space (on distributed cluster it will transform into huge data spill and most likely fail due to disk space or even it may brake the whole cluster if it is not protected from disk overflow).</p>
+<h2 id="case-when-approach">Case-when approach<a hidden class="anchor" aria-hidden="true" href="#case-when-approach">#</a></h2>
+<p>Another approach is to use the <code>CASE-WHEN</code> approach. For example, to compute the <code>count(*)</code> over some group, we can avoid using <code>groupBy' at all, just because the count of rows related to some value </code>val<code>of a group key is just a sum over a</code>CASE-WHEN<code>expression like this:</code>F.sum(F.when(F.col(&ldquo;grp_key&rdquo;) == F.lit(val), F.lit(1)).otherwise(F.lit(0)))<code>. In this case, we use case-when to return 1 for all rows related to the group and zero otherwise. The sum over such a result is obviously equal to the number of rows related to the value of the group. To calculate </code>sum<code>we can use the value of the sum column for rows related to the group and zero otherwise. To calculate the average, we need to replace unrelated rows with</code>null`, because the built-in Spark averaging function ignores null. You can check the documentation to understand how to calculate other types of aggregates.</p>
+<p>Let&rsquo;s write the code, that generate our aggragations for H2O dataset:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">case_when_fs</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">cols_list</span> <span class="o">=</span> <span class="p">[]</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">grp_col</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">cond</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="n">grp_col</span><span class="p">)</span> <span class="o">==</span> <span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="n">cols_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">                <span class="n">F</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">otherwise</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="mi">0</span><span class="p">)))</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">_valof_</span><span class="si">{</span><span class="n">grp_col</span><span class="si">}</span><span class="s2">_count_v1&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="n">cols_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">                <span class="n">F</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;v2&#34;</span><span class="p">))</span><span class="o">.</span><span class="n">otherwise</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="mi">0</span><span class="p">)))</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">_valof_</span><span class="si">{</span><span class="n">grp_col</span><span class="si">}</span><span class="s2">_sum_v2&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="n">cols_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">                <span class="n">F</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;v2&#34;</span><span class="p">))</span><span class="o">.</span><span class="n">otherwise</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="kc">None</span><span class="p">)))</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">_valof_</span><span class="si">{</span><span class="n">grp_col</span><span class="si">}</span><span class="s2">_avg_v3&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">PRIMARY_KEY</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="o">*</span><span class="n">cols_list</span><span class="p">)</span>
+</span></span></code></pre></div><p>We will run the same test with write for that approach:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="o">%%</span><span class="n">time</span>
+</span></span><span class="line"><span class="cl"><span class="n">case_when_fs</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&#34;overwrite&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;tmp/case_when_output&#34;</span><span class="p">)</span>
+</span></span></code></pre></div><p>Results:</p>
+<ul>
+<li>Run N1:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">CPU times: user <span class="m">157</span> ms, sys: 40.5 ms, total: <span class="m">198</span> ms
+</span></span><span class="line"><span class="cl">Wall time: 13.9 s
+</span></span></code></pre></div><ul>
+<li>Run N2:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">CPU times: user <span class="m">176</span> ms, sys: 35.6 ms, total: <span class="m">211</span> ms
+</span></span><span class="line"><span class="cl">Wall time: 14.3 s
+</span></span></code></pre></div><ul>
+<li>Run N3:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">CPU times: user <span class="m">192</span> ms, sys: 41.3 ms, total: <span class="m">233</span> ms
+</span></span><span class="line"><span class="cl">Wall time: 16.9 s
+</span></span></code></pre></div><h3 id="spark-plan-analysis-1">Spark Plan analysis<a hidden class="anchor" aria-hidden="true" href="#spark-plan-analysis-1">#</a></h3>
+<p>In this case, there are no sort-merge-join operations in the plan. The calculation is almost x1.5 faster. Also, this code will work in the case of 10 million rows without errors (out-of-core case) without disk spill and Java heap space errors. Also, this approach give you more prciese control over the variable names, groups combinations, etc.</p>
+<h2 id="conclusion">Conclusion<a hidden class="anchor" aria-hidden="true" href="#conclusion">#</a></h2>
+<p>The described above case is quite specific, but still very offen. And it is a nice example, how engineers can use domain knowledge about keys distribution, required output, etc. to write less generic but more effective code!</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/ssinchenko/tags/pyspark/">Pyspark</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="next" href="http://localhost:1313/ssinchenko/post/extending-spark-connect/">
+    <span class="title">Next »</span>
+    <br>
+    <span>Extending Spark Connect</span>
+  </a>
+</nav>
+
+
+<ul class="share-buttons">
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Computing ML Feature Store in PySpark on x"
+            href="https://x.com/intent/tweet/?text=Computing%20ML%20Feature%20Store%20in%20PySpark&amp;url=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2feffective_feature_store_pyspark%2f&amp;hashtags=pyspark">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M512 62.554 L 512 449.446 C 512 483.97 483.97 512 449.446 512 L 62.554 512 C 28.03 512 0 483.97 0 449.446 L 0 62.554 C 0 28.03 28.029 0 62.554 0 L 449.446 0 C 483.971 0 512 28.03 512 62.554 Z M 269.951 190.75 L 182.567 75.216 L 56 75.216 L 207.216 272.95 L 63.9 436.783 L 125.266 436.783 L 235.9 310.383 L 332.567 436.783 L 456 436.783 L 298.367 228.367 L 432.367 75.216 L 371.033 75.216 Z M 127.633 110 L 164.101 110 L 383.481 400.065 L 349.5 400.065 Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Computing ML Feature Store in PySpark on linkedin"
+            href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2feffective_feature_store_pyspark%2f&amp;title=Computing%20ML%20Feature%20Store%20in%20PySpark&amp;summary=Computing%20ML%20Feature%20Store%20in%20PySpark&amp;source=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2feffective_feature_store_pyspark%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Computing ML Feature Store in PySpark on reddit"
+            href="https://reddit.com/submit?url=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2feffective_feature_store_pyspark%2f&title=Computing%20ML%20Feature%20Store%20in%20PySpark">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Computing ML Feature Store in PySpark on facebook"
+            href="https://facebook.com/sharer/sharer.php?u=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2feffective_feature_store_pyspark%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Computing ML Feature Store in PySpark on whatsapp"
+            href="https://api.whatsapp.com/send?text=Computing%20ML%20Feature%20Store%20in%20PySpark%20-%20http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2feffective_feature_store_pyspark%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Computing ML Feature Store in PySpark on telegram"
+            href="https://telegram.me/share/url?text=Computing%20ML%20Feature%20Store%20in%20PySpark&amp;url=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2feffective_feature_store_pyspark%2f">
+            <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Computing ML Feature Store in PySpark on ycombinator"
+            href="https://news.ycombinator.com/submitlink?t=Computing%20ML%20Feature%20Store%20in%20PySpark&u=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2feffective_feature_store_pyspark%2f">
+            <svg version="1.1" xml:space="preserve" width="30px" height="30px" viewBox="0 0 512 512" fill="currentColor"
+                xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+                <path
+                    d="M449.446 0C483.971 0 512 28.03 512 62.554L512 449.446C512 483.97 483.97 512 449.446 512L62.554 512C28.03 512 0 483.97 0 449.446L0 62.554C0 28.03 28.029 0 62.554 0L449.446 0ZM183.8767 87.9921H121.8427L230.6673 292.4508V424.0079H281.3328V292.4508L390.1575 87.9921H328.1233L256 238.2489z" />
+            </svg>
+        </a>
+    </li>
+</ul>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2024 <a href="http://localhost:1313/ssinchenko/">Sem Sinchenko</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

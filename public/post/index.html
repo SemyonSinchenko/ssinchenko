@@ -170,6 +170,18 @@
 </header>
 
 <article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Computing ML Feature Store in PySpark
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>In this blog post, I will share my experience in building an ML Feature Store using PySpark. I will demonstrate how one can utilize case-when expressions to generate multiple aggregations with minimal data shuffling across the cluster. This approach is significantly more efficient than the naive method of using a combination of groupBy and pivot for generating aggregations (or features in ML terms).</p>
+  </div>
+  <footer class="entry-footer"><span title='2024-04-07 16:01:25 +0200 CEST'>April 7, 2024</span>&nbsp;·&nbsp;2 min&nbsp;·&nbsp;Sem Sinchenko</footer>
+  <a class="entry-link" aria-label="post link to Computing ML Feature Store in PySpark" href="http://localhost:1313/ssinchenko/post/effective_feature_store_pyspark/"></a>
+</article>
+
+<article class="post-entry"> 
 <figure class="entry-cover"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/f/f3/Apache_Spark_logo.svg" alt="">
 </figure>
   <header class="entry-header">
@@ -177,8 +189,7 @@
     </h2>
   </header>
   <div class="entry-content">
-    <p>Preface I would like to thank Martin Grund. He gave me a lot of useful advice during my work on this project!
-Introduction Recently, I published a post about potential compatibility issues between SparkConnect and 3d-party libraries that depend on py4j. After that post, people from Databricks contacted me and suggested we work together on this issue. With their help, I tried to create a step-by-step guide for newbies on how to extend SparkConnect and how to potentially migrate from py4j logic to writing protocol plugins....</p>
+    <p>This blog post presents a very detailed step-by-step guide on how to create a SparkConnect protocol extension in Java and call it from PySpark. It will also cover a topic about how to define all the necessary proto3 messages for it. At the end of this guide you will have a way to interact with Spark JVM from PySpark almost like you can with py4j in a non-connect version.</p>
   </div>
   <footer class="entry-footer"><span title='2024-03-04 12:30:57 +0100 CET'>March 4, 2024</span>&nbsp;·&nbsp;22 min&nbsp;·&nbsp;Sem Sinchenko</footer>
   <a class="entry-link" aria-label="post link to Extending Spark Connect" href="http://localhost:1313/ssinchenko/post/extending-spark-connect/"></a>
