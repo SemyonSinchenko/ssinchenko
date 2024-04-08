@@ -119,7 +119,7 @@ Result:
 +-----+-----+------------+---+---+-----+---+---+--------+
 ```
 
-The entire data set has 1,000,000 rows. Here we have the column `id3` which is a string and has ~100,000 unique values. This column represents a unique key, for example a customer id. The columns `id1', `id2', `id4', `id5' have 10 unique but independent values and will represent our grouping keys, like time interval flag and different categories.
+The entire data set has 1,000,000 rows. Here we have the column `id3` which is a string and has ~100,000 unique values. This column represents a unique key, for example a customer id. The columns `id1`, `id2`, `id4`, `id5` have 10 unique but independent values and will represent our grouping keys, like time interval flag and different categories.
 
 To reproduce my experiment, you can use the [farsante library](https://github.com/MrPowers/farsante), which contains effective H2O dataset generators written in Rust. See the [documentation](https://github.com/MrPowers/farsante?tab=readme-ov-file#python) for details. I used the rust cli api of farsante and the following commands to genrate this dataset:
 
@@ -152,15 +152,7 @@ groups = {
 PRIMARY_KEY = "id3"
 ```
 
-By using this structure it is easy to write the naive groupBy-pivot way:
-
-```python  
-```
-
-PRIMARY_KEY = "id3"
-
-
-By using this structure it is easy to write the ```pythonnaive groupBy-pivot way:
+By using this structure it is easy to write the naive groupBy-pivot version:
 
 ```python
 from functools import reduce
