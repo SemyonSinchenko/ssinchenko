@@ -2,7 +2,7 @@
 
 ## About
 
-- **Name:** Semyon Sinchenko
+- **Name:** Sem Sinchenko
 - **Title:** Senior Data Engineer
 - **Company:** Raiffeisenbank International AG
 - **Location:** Belgrade, Serbia
@@ -16,7 +16,7 @@
 
 ## Contacts
 
-[ssinchenko@protonmail.com](mailto:ssinchenko@protonmail.com)
+[ssinchenko@apache.org](mailto:ssinchenko@apache.org)
 
 
 ## Career
@@ -57,6 +57,13 @@
 - Designer and implementer of machine learning models and processes
 - Co-architect of the inner model-deployment Python library
 - Creator of the massive-parallel implementations of few data science algorithms on top of the Apache Spark
+
+## Open Source Activities
+
+### Apache GraphAr (incubating) PMC
+
+**Achievements:**
+- Implemented Python API for the library for working with Graph Data in DataLakes
 
 ## Education
 
@@ -120,14 +127,9 @@ Numeric modeling of X-Ray Powder Diffraction.
 
 ### Codewars
 
-**Most trained languages:**
-
-1. Scala
-2. Python
-3. Common Lisp
-
 [![](https://www.codewars.com/users/semyon_sinchenko/badges/large)](https://www.codewars.com/users/semyon_sinchenko)
 
 ### Hackathons
 
 1. Hackathon "Leaders of Digital 2020", Russian Ministry of Energy use-case. Our team was placed 1st. The task was to create a end2end data process for prediction of an energy consumption. I was responsible for Machine Learning Back-end and data processing pipeline.
+
