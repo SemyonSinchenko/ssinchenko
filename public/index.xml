@@ -88,7 +88,7 @@
       <link>http://localhost:1313/ssinchenko/page/cv/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/ssinchenko/page/cv/</guid>
-      <description>CV About Name: Semyon Sinchenko Title: Senior Data Engineer Company: Raiffeisenbank International AG Location: Belgrade, Serbia Key Skills: Python, Apache Spark, ETL, Scala, MLOps Languages: English Russian Contacts ssinchenko@protonmail.com
+      <description>CV About Name: Sem Sinchenko Title: Senior Data Engineer Company: Raiffeisenbank International AG Location: Belgrade, Serbia Key Skills: Python, Apache Spark, ETL, Scala, MLOps Languages: English Russian Contacts ssinchenko@apache.org
 Career Senior Data Engineer dates: July 2022 - onwards company: Raiffeisenbank International AG division: Advanced Analytics, Retail Tribe skills: Python, Databricks, PySpark, Apache Spark, MLFlow, SQL Achievements:
 Designed and implemented ML Production Pipelines in Databricks with MLFlow and Apache Spark Created a lot of ETL-pipelines for various Data Marts with PySpark and Databricks Designed and implemented Feature Store for both Production and Development of ML Models Data Engineer dates: October 2020 - July 2022 company: Raiffeisenbank Russia division: HR Department skills: Python, Java, Scala, Apache Spark, Hadoop, Hive, Apache Airflow, SQL Achievements:*</description>
     </item>
