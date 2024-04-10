@@ -42,15 +42,15 @@ data_with_flags = (
   data
   .withColumn(
     "last_week_flag",
-    (F.datadiff(F.current_date(), F.col("login_date")) <= F.lit(7))
+    (F.datediff(F.current_date(), F.col("login_date")) <= F.lit(7))
   )
   .withColumn(
     "last_month_flag",
-    (F.datadiff(F.current_date(), F.col("login_date")) <= F.lit(30.5))
+    (F.datediff(F.current_date(), F.col("login_date")) <= F.lit(30.5))
   )
   .withColumn(
     "last_six_month_flag",
-    (F.datadiff(F.current_date(), F.col("login_date")) <= F.lit(30.5 * 6))
+    (F.datediff(F.current_date(), F.col("login_date")) <= F.lit(30.5 * 6))
   )
 )
 ```
