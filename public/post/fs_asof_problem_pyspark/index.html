@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/ssinchenko/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=ssinchenko/livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Effective asOfJoin in PySpark for Feature Store | Sem Sinchenko</title>
+<meta name="keywords" content="pyspark, feature-store">
+<meta name="description" content="Leveraging Time-Based Feature Stores for Efficient Data Science Workflows In our previous post, we briefly touched upon the concept of ML feature stores and their significance in streamlining machine learning workflows. Today, we&rsquo;ll again explore a specific type of feature store known as a time-based feature store, which plays a crucial role in handling temporal data and enabling efficient feature retrieval for data science tasks. In this post we&rsquo;ll how a feature-lookup problem may be effectively solved in PySpark using domain knowledge and understanding how Apache Spark works with partitions and columnar data formats.">
+<meta name="author" content="Sem Sinchenko">
+<link rel="canonical" href="http://localhost:1313/ssinchenko/post/fs_asof_problem_pyspark/">
+<link crossorigin="anonymous" href="/ssinchenko/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/ssinchenko/images/fav/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/ssinchenko/images/fav/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/ssinchenko/images/fav/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/ssinchenko/images/fav/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/ssinchenko/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/ssinchenko/post/fs_asof_problem_pyspark/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="Effective asOfJoin in PySpark for Feature Store" />
+<meta property="og:description" content="Leveraging Time-Based Feature Stores for Efficient Data Science Workflows In our previous post, we briefly touched upon the concept of ML feature stores and their significance in streamlining machine learning workflows. Today, we&rsquo;ll again explore a specific type of feature store known as a time-based feature store, which plays a crucial role in handling temporal data and enabling efficient feature retrieval for data science tasks. In this post we&rsquo;ll how a feature-lookup problem may be effectively solved in PySpark using domain knowledge and understanding how Apache Spark works with partitions and columnar data formats." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/ssinchenko/post/fs_asof_problem_pyspark/" />
+<meta property="og:image" content="http://localhost:1313/ssinchenko/images/asof/fs_overview.png" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2024-04-14T13:42:36+02:00" />
+<meta property="article:modified_time" content="2024-04-14T13:42:36+02:00" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="http://localhost:1313/ssinchenko/images/asof/fs_overview.png" />
+<meta name="twitter:title" content="Effective asOfJoin in PySpark for Feature Store"/>
+<meta name="twitter:description" content="Leveraging Time-Based Feature Stores for Efficient Data Science Workflows In our previous post, we briefly touched upon the concept of ML feature stores and their significance in streamlining machine learning workflows. Today, we&rsquo;ll again explore a specific type of feature store known as a time-based feature store, which plays a crucial role in handling temporal data and enabling efficient feature retrieval for data science tasks. In this post we&rsquo;ll how a feature-lookup problem may be effectively solved in PySpark using domain knowledge and understanding how Apache Spark works with partitions and columnar data formats."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/ssinchenko/post/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Effective asOfJoin in PySpark for Feature Store",
+      "item": "http://localhost:1313/ssinchenko/post/fs_asof_problem_pyspark/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Effective asOfJoin in PySpark for Feature Store",
+  "name": "Effective asOfJoin in PySpark for Feature Store",
+  "description": "Leveraging Time-Based Feature Stores for Efficient Data Science Workflows In our previous post, we briefly touched upon the concept of ML feature stores and their significance in streamlining machine learning workflows. Today, we\u0026rsquo;ll again explore a specific type of feature store known as a time-based feature store, which plays a crucial role in handling temporal data and enabling efficient feature retrieval for data science tasks. In this post we\u0026rsquo;ll how a feature-lookup problem may be effectively solved in PySpark using domain knowledge and understanding how Apache Spark works with partitions and columnar data formats.",
+  "keywords": [
+    "pyspark", "feature-store"
+  ],
+  "articleBody": "Leveraging Time-Based Feature Stores for Efficient Data Science Workflows In our previous post, we briefly touched upon the concept of ML feature stores and their significance in streamlining machine learning workflows. Today, we’ll again explore a specific type of feature store known as a time-based feature store, which plays a crucial role in handling temporal data and enabling efficient feature retrieval for data science tasks. In this post we’ll how a feature-lookup problem may be effectively solved in PySpark using domain knowledge and understanding how Apache Spark works with partitions and columnar data formats.\nPrecomputed features stored can significantly speed up the Data Science development process and simplify maintenance, lineage, and data quality tracking. By having a centralized repository of precomputed features, data scientists can easily access and reuse these features across multiple projects, eliminating the need to repeatedly compute them from scratch. This approach saves valuable time and computational resources, allowing data scientists to focus on model development and experimentation rather than feature engineering. Moreover, a feature store acts as a single source of truth for all features, ensuring consistency and reducing the risk of mismatch between different models or projects. It also simplifies lineage tracking, as the origin and transformations of each feature are well-documented and easily traceable. Additionally, data quality issues can be identified and addressed at the feature level, ensuring that all models consuming those features benefit from the improvements. By centralizing feature management, organizations can avoid the need to implement feature computation, lineage, and data quality tracking for each model separately, leading to a more efficient and maintainable Data Science workflow.\nUnderstanding Time-Based Feature Stores A time-based feature store is essentially a table that contains precomputed features for each customer at various timepoints over a recent period. This table is typically partitioned by a timecol column, which represents the date on which the features are up-to-date. Each partition within the table includes data in the form of a customer ID (custid) mapped to a set of features.\nFor example, consider a scenario where we have a feature store table with one thousand features computed for each customer ID and corresponding date (represented by the timecol partition column). The table structure would look something like this:\ntimecol (partition column) | custid | feature_1 | feature_2 | ... | feature_1000 Typical Use Case: Leveraging Feature Stores for Data Science Tasks A common use case for leveraging a feature store arises when a data scientist has data in the form of customer_id -\u003e (observation_date, observation, *additional_columns). The observation_date represents the date wheni, for example, a marketing communication was sent to a customer, and the observation represents the customer’s reaction to the marketing communication, such as whether the customer accepted the offer within a week after the communication or not. In terms of ML Models observation is like y variable.\nThe task at hand is to create a predictive machine learning model that can estimate the probability of success of a marketing communication for a given customer. To accomplish this, we need to create a dataset in the form of customer_id -\u003e (observation_date, observation, *additional_columns, features), where the features are retrieved from the feature store.\nIt is crucial to avoid leakage of features from the future and ensure that only the latest available features before the observation_date are used. This requirement leads to the “asOfJoin” problem, which involves joining the customer data with the feature store table based on the customer ID and the observation date.\nThe asOfJoin Problem The asOfJoin problem revolves around finding the most recent set of features for each customer that were computed before a given observation date. It requires joining the customer data with the feature store table while considering the temporal aspect of the data.\nConceptually, the asOfJoin operation can be described as follows:\nFor each customer ID in the customer data: Find the latest available features in the feature store table where the timecol is less than or equal to the observation date asOfJoin problem in DS workflow The asOfJoin problem is a common challenge in data science workflows, particularly when dealing with time-series data or scenarios where features need to be retrieved based on specific timepoints. In the upcoming sections, we’ll dive deeper into the asOfJoin problem, explore various approaches to solve it efficiently, and discuss how important for an engineer do not use generic algorithms blindly but put a domain knowledge into the solution code instead.\nData Generation and test setup To simulate the described above workflow and asOfJoin let’s create few feature tables of different size and an observation table.\nData Generation Code from uuid import uuid1 from datetime import datetime, timedelta from random import random, randint from pyspark.sql import SparkSession, functions as F, types as T, DataFrame, Row spark = SparkSession.builder.master(\"local[*]\").getOrCreate() def generate_fs_schema(n: int) -\u003e T.StructType: fields = [T.StructField(\"custid\", T.StringType())] for i in range(n): fields.append(T.StructField(f\"feature_col_{i}\", T.DoubleType())) return T.StructType(fields=fields) OBSERVATIONS_SCHEMA = T.StructType( [ T.StructField(\"custid\", T.StringType()), T.StructField(\"timecol\", T.StringType()), T.StructField(\"observation\", T.IntegerType()), T.StructField(\"additionalColA\", T.StringType()), T.StructField(\"additionalColB\", T.StringType()), T.StructField(\"additionalColC\", T.StringType()), T.StructField(\"additionalColD\", T.StringType()), T.StructField(\"additionalColE\", T.StringType()), T.StructField(\"additionalColF\", T.StringType()), T.StructField(\"additionalColG\", T.StringType()), T.StructField(\"additionalColH\", T.StringType()), T.StructField(\"additionalColI\", T.StringType()), ] ) N = 100_000 CUSTOMER_IDS_ALL = [uuid1() for _ in range(N)] CUSTOMER_IDS_OBSERVATIONS = [uid for uid in CUSTOMER_IDS_ALL if random() \u003c= .25] DATES_ALL = [d.to_pydatetime() for d in pd.date_range(start=\"2022-01-01\", end=\"2024-01-01\", freq=\"ME\")] def generate_observations() -\u003e DataFrame: rows = [] for cid in CUSTOMER_IDS_OBSERVATIONS: rows.append( Row( custid=cid, timecol=datetime.strftime(DATES_ALL[randint(1, len(DATES_ALL) - 1)] - timedelta(days=randint(0, 20)), \"%Y-%m-%d\"), observation=randint(0, 1), additionalColA=random(), additionalColB=random(), additionalColC=random(), additionalColD=random(), additionalColE=random(), additionalColF=random(), additionalColG=random(), additionalColH=random(), additionalColI=random(), ) ) return spark.createDataFrame(rows, schema=OBSERVATIONS_SCHEMA) def generate_fs_partition(schema: T.StructType, date_col: str) -\u003e DataFrame: rows = [] for cid in CUSTOMER_IDS_OBSERVATIONS: res = {} for col in schema.fields: if col.name == \"custid\": val = cid elif col.name == \"observation\": val = randint(0, 1) else: val = random() res[col.name] = val rows.append(Row(**res)) return spark.createDataFrame(rows, schema) The code starts by importing necessary libraries and creating a SparkSession.\nThe generate_fs_schema function is defined next, which takes an integer n as input and generates a StructType schema for a feature store dataset; The schema includes a “custid” field of string type and n additional fields named “feature_col_i” of double type; The OBSERVATIONS_SCHEMA is defined as a StructType representing the schema for an observations dataset (or train dataset in terms of ML workflow). It includes fields such as “custid”, “timecol”, “observation”, and additional columns from “additionalColA” to “additionalColI” that represents some additional features or informatin, for example a channel of merketing communication; The code sets the value of N to 100,000, which represents the number of unique customer IDs to generate. The CUSTOMER_IDS_ALL list is created by generating N unique customer IDs using the uuid1 function. The CUSTOMER_IDS_OBSERVATIONS list is created by filtering the CUSTOMER_IDS_ALL list based on a random probability of 0.25; The DATES_ALL list is created by generating a sequence of dates from “2022-01-01” to “2024-01-01” with a monthly frequency using the pd.date_range function. For simplicity we will simulate the case when Feature Store Table has a monthly basis. In other words, we will have all the features for each customer once per month. The generate_observations function is defined, which generates a DataFrame representing the observations dataset. It iterates over the CUSTOMER_IDS_OBSERVATIONS list and creates a row for each customer ID with random values for the observation and additional columns. For avoiding a trivial case when observation dates match exactly to end of month we make also a random shift by 0-20 days back; The generate_fs_partition function is defined, which generates a DataFrame representing a partition of the feature store dataset. It takes a StructType schema and a date column name as input. It iterates over the CUSTOMER_IDS_OBSERVATIONS list and creates a row for each customer ID with random values for the feature columns. The following code generates for us three observation datasets and three Feature Store tables of different size:\nOBS = generate_observations() OBS.write.mode(\"overwrite\").parquet(\"data/OBSERVATIONS\") OBS.sample(0.5).write.mode(\"overwrite\").parquet(\"data/OBSERVATIONS_SMALL\") OBS.sample(0.25).write.mode(\"overwrite\").parquet(\"data/OBSERVATIONS_TINY\") SCHEMA_10 = generate_fs_schema(10) SCHEMA_50 = generate_fs_schema(50) SCHEMA_150 = generate_fs_schema(150) for date in DATES_ALL: date_str = datetime.strftime(date, \"%Y-%m-%d\") generate_fs_partition(SCHEMA_10, date_str).write.mode(\"overwrite\").parquet(f\"data/FS_TABLE_10/timecol={date_str}\") generate_fs_partition(SCHEMA_50, date_str).write.mode(\"overwrite\").parquet(f\"data/FS_TABLE_50/timecol={date_str}\") generate_fs_partition(SCHEMA_150, date_str).write.mode(\"overwrite\").parquet(f\"data/FS_TABLE_150/timecol={date_str}\") Checking the generated data We have three observation datasets:\nTINY: 1.1 Mb; SMALL: 2.2 Mb; REGULAR: 4.2 Mb; And we have three feature store tables:\n10 features: 65 Mb; 50 features: 251 Mb; 150 features: 717 Mb; All three feature tables are partitioned by timecol:\n\u003e dust --depth 1 FS_TABLE_150/ 0B ┌── _SUCCESS │ 0% 4.0K ├── ._SUCCESS.crc │ 0% 29M ├── timecol=2022-01-31 │ 4% 29M ├── timecol=2022-02-28 │ 4% 29M ├── timecol=2022-03-31 │ 4% 29M ├── timecol=2022-04-30 │ 4% 29M ├── timecol=2022-05-31 │ 4% 29M ├── timecol=2022-06-30 │ 4% 29M ├── timecol=2022-07-31 │ 4% 29M ├── timecol=2022-08-31 │ 4% 29M ├── timecol=2022-09-30 │ 4% 29M ├── timecol=2022-10-31 │ 4% 29M ├── timecol=2022-11-30 │ 4% 29M ├── timecol=2022-12-31 │ 4% 29M ├── timecol=2023-01-31 │ 4% 29M ├── timecol=2023-02-28 │ 4% 29M ├── timecol=2023-03-31 │ 4% 29M ├── timecol=2023-04-30 │ 4% 29M ├── timecol=2023-05-31 │ 4% 29M ├── timecol=2023-06-30 │ 4% 29M ├── timecol=2023-07-31 │ 4% 29M ├── timecol=2023-08-31 │ 4% 29M ├── timecol=2023-09-30 │ 4% 29M ├── timecol=2023-10-31 │ 4% 29M ├── timecol=2023-11-30 │ 4% 29M ├── timecol=2023-12-31 │ 4% 717M ┌─┴ FS_TABLE_150 Why partitioning is important? Apache Spark’s optimizer can leverage information about partitioning and min/max values from Parquet file headers to optimize query execution and reduce the amount of data that needs to be read.\nPartitioning:\nWhen data is partitioned based on certain columns, Spark can use this information to prune partitions that are not relevant to the query. If a query has filters on the partitioning columns, Spark can identify which partitions satisfy the filter conditions and skip reading the irrelevant partitions entirely. This partition pruning optimization can significantly reduce the amount of data scanned and improve query performance. Min/Max Values in Parquet File Headers:\nParquet files contain metadata in their headers, including the minimum and maximum values for each column within the file. Spark’s optimizer can utilize this information to determine if a file needs to be read based on the query’s filter conditions. If the filter condition falls outside the range of min/max values for a column in a Parquet file, Spark can skip reading that file altogether. By avoiding unnecessary file scans, Spark can optimize query execution and reduce the amount of I/O operations. Combining Partitioning and Min/Max Values:\nWhen data is partitioned and stored in Parquet format, Spark can leverage both partitioning information and min/max values for optimization. Spark can first prune irrelevant partitions based on the partitioning scheme and query filters. Within the remaining partitions, Spark can further utilize the min/max values from the Parquet file headers to determine which files need to be read. By combining these optimizations, Spark can significantly reduce the amount of data scanned and improve query performance. NOTE: By leveraging partition pruning, projection pushdowm and predicate pushdown it is possible to allow Spark/PySpark to work in a hard out-of-core mode, when the overall size of data on disks is much much bigger than the amount of available memory!\nBenchmarking preparation spark = ( SparkSession .builder .master(\"local[*]\") .config(\"spark.sql.autoBroadcastJoinThreshold\", \"-1\") .getOrCreate() ) spark.sparkContext.setLogLevel(\"ERROR\") observations = spark.read.parquet(\"data/OBSERVATIONS/\") observations_tiny = spark.read.parquet(\"data/OBSERVATIONS_TINY/\") observations_small = spark.read.parquet(\"data/OBSERVATIONS_SMALL/\") features_10 = spark.read.parquet(\"data/FS_TABLE_10/\") features_50 = spark.read.parquet(\"data/FS_TABLE_50/\") features_150 = spark.read.parquet(\"data/FS_TABLE_150/\") NOTE: We explicitly disabled broadcast joins here juyst because I’m using an old Dell laptop with 16G of memory and an old i3-8145U. In my case an observation data that my laptop can process is so small that it will be implicitly broadcasted in almost any asOgJoin implementation. But on real-world problems when observation data contains tipically 100k - 1M of rows with a lot of additional columns, so auto-broadcasting won’t help anyway.\nasOfJoin techniques There are few alvailable generic asOfJoin implementations in PySpark. We will focus mostly on two of them:\nMultiple Join and Aggregate Union-based Multiple Join and Aggragate This algorithm is implemnted directly in Apache Spark and can be used from PySpark by invoking pyspark.pandas.merge_asof. Let’s see how it works. There is a cool docstring that explains the idea in the Apache Spark Source Code:\n/** * Replaces logical [[AsOfJoin]] operator using a combination of Join and Aggregate operator. ... ... **/ object RewriteAsOfJoin extends Rule[LogicalPlan] It transform the following pseudo-query:\nSELECT * FROM left ASOF JOIN right ON (condition, as_of on(left.t, right.t), tolerance) to the following query:\nSELECT left.*, __right__.* FROM ( SELECT left.*, ( SELECT MIN_BY(STRUCT(right.*), left.t - right.t) AS __nearest_right__ FROM right WHERE condition AND left.t \u003e= right.t AND right.t \u003e= left.t - tolerance ) as __right__ FROM left ) WHERE __right__ IS NOT NULL Multiple Join and Aggregate Join on the Feature Lookup problem In the case of Features Lookup problem we can use Pandas on Spark (previously known as Koalas):\nfrom pyspark import pandas as koalas def asofjoin_koalas(obs: DataFrame, fs: DataFrame) -\u003e DataFrame: obs = obs.withColumn(\"timecol\", F.to_date(F.col(\"timecol\"), format=\"yyyy-MM-dd\")) res = koalas.merge_asof(left=obs.to_pandas_on_spark(), right=fs.to_pandas_on_spark(), on=[\"timecol\"], by=\"custid\") return res.spark.frame() Unfortunately, because of the full-read into memory of Feature Table the complexity of the overall task won’t depend of the size of observation tabele. Obviously any try to run that code will tend to OOM on a local setup and most probably to the endless disk spill on a real-worlds cluster:\n%%time asofjoin_koalas(observations_tiny, features_10).write.mode(\"overwrite\").parquet(\"tmp/temp_test\") java.lang.OutOfMemoryError: Java heap space It fails even on a tiny data, but it is actually because of the size of FS table.\nUnion based approach Union-based approach is based on the idea of union two data and apply a LAST(col, ignorenulls=true) OVER WINDOW PARTIION BY join-key ORDER BY time_fs WHERE time_fs \u003c= time_obs. This approach is used, for example, in Databricks Labs DBL Tempo project.\nNOTE: Due to a hard license limitation of DBL Tempo project from Databricks Labs that is destributed under Databricks commerical license I cannot use it my benchmark.\nThe problem of Union approach Unfortunately we will face the same probelm with union like with koalas: Union not only required a full table read but also required a full table shuffle. It will always tend to a shaffle of all the features from the disk to the memory and to huge disk spill.\nUsing a domain knowledge As one may see, generic approaches to asOfJoin problem looks like non working in a case of Features Lookup. What can we do here? We can do what each engineer should do: use domain knowledge. Let’s see what can we use:\nFeatures Table is much bigger that observations Features Table is optimized for direct join by timecol (partition prunning and pre-partitioning) and custid (min-max in header of parquet files) Proposed algorithm Let’s try the following algorithm:\nTake only keys (id -\u003e time) from observations Take only keys (id -\u003e time) from fs table Use left join by id: We know that observation is a small table We are taking only tow columns We are able to make explicit broadcast due to these facts For each id from observation get the latest time from FS by groupBy + max Take the table from p.4, that has a dimension N_observation x 2 (small table, two columns) Join that table to FeatureStore table: Left join: one key is partition, another key is unique in partition (we can leverage pushdown/prunning) Right table is small and has only two columns We can use explicit broadcast of the right table here Join resulted table with observations: simple inner join, no duplicates/nulls def asofjoin_manual(obs: DataFrame, fs: DataFrame) -\u003e DataFrame: only_ids_left = obs.select(\"custid\", \"timecol\") only_ids_right = fs.select(F.col(\"custid\"), F.col(\"timecol\").alias(\"timecol_right\")) cond = (only_ids_left.custid == only_ids_right.custid) \u0026 (only_ids_left.timecol \u003c= only_ids_right.timecol_right) cross = ( only_ids_right .join( F.broadcast(only_ids_left), on=cond, how=\"left\" ) .drop(only_ids_right.custid) ) final_ids_fs = ( cross .groupBy(F.col(\"custid\"), F.col(\"timecol\").alias(\"timecol_obs\")) .agg(F.max(\"timecol_right\").alias(\"timecol\")) ) selected_features = ( fs.join( F.broadcast(final_ids_fs), on=[\"custid\", \"timecol\"], how=\"left\" ) .withColumn(\"timecol_fs\", F.col(\"timecol\")) .withColumn(\"timecol\", F.col(\"timecol_obs\")) ) return selected_features.join(observations, on=[\"custid\", \"timecol\"], how=\"inner\") Tests SMALL FEATURE STORE\n%%time asofjoin_manual(observations, features_10).write.mode(\"overwrite\").parquet(\"tmp/temp_test\") Result: success, 3.5 sec\nMEDIUM FEATURE STORE\n%%time asofjoin_manual(observations, features_50).write.mode(\"overwrite\").parquet(\"tmp/temp_test\") Result: sucess, 4.64 sec\nBIG FEATURE STORE\n%%time asofjoin_manual(observations, features_150).write.mode(\"overwrite\").parquet(\"tmp/temp_test\") Result: sucess, 8.95 sec\nAnalysis As one may see, our appraoch is working with any size of Featore Store because in our algorithm the complexity depends mostly of the size of observations that is a relative small piece of data. And also we can use all the benefits of partitioning structure and uniqeness of the Id column within partitions. Additional sorting the data before writeing (for example, in DeltaLake it may be achieved by Z ORDER) will provide additional benefits!\nConclusion Domain knowledge is crucial for Data Engineers when writing logic because it enables them to make informed decisions and optimize their algorithms for specific tasks. By understanding the size of tables, partitioning schemes, and other domain-specific information, Data Engineers can tailor their algorithms to be more effective and efficient for the given use case. Generic data algorithms, while designed to be applicable in a wide range of scenarios, often sacrifice effectiveness in favor of generality. This is because there is no “free lunch” in algorithm design, meaning that an algorithm that performs well on all possible inputs is unlikely to exist. Instead, by leveraging their domain knowledge, Data Engineers can create custom algorithms that are specifically designed to handle the unique characteristics and constraints of their data. This approach leads to improved performance, scalability, and resource utilization, ultimately resulting in more effective and efficient data processing pipelines.\n",
+  "wordCount" : "2840",
+  "inLanguage": "en",
+  "image":"http://localhost:1313/ssinchenko/images/asof/fs_overview.png","datePublished": "2024-04-14T13:42:36+02:00",
+  "dateModified": "2024-04-14T13:42:36+02:00",
+  "author":[{
+    "@type": "Person",
+    "name": "Sem Sinchenko"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/ssinchenko/post/fs_asof_problem_pyspark/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Sem Sinchenko",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/ssinchenko/images/fav/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/ssinchenko/" accesskey="h" title="Sem Sinchenko (Alt + H)">Sem Sinchenko</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/ssinchenko/" title="Blog">
+                    <span>Blog</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/ssinchenko/page/about/" title="About">
+                    <span>About</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/ssinchenko/page/cv/" title="CV">
+                    <span>CV</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/ssinchenko/categories" title="Categories">
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/ssinchenko/tags" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Effective asOfJoin in PySpark for Feature Store
+    </h1>
+    <div class="post-meta"><span title='2024-04-14 13:42:36 +0200 CEST'>April 14, 2024</span>&nbsp;·&nbsp;14 min&nbsp;·&nbsp;Sem Sinchenko
+
+</div>
+  </header> 
+<figure class="entry-cover"><img loading="eager" src="http://localhost:1313/ssinchenko/images/asof/fs_overview.png" alt="">
+        
+</figure>
+  <div class="post-content"><h1 id="leveraging-time-based-feature-stores-for-efficient-data-science-workflows">Leveraging Time-Based Feature Stores for Efficient Data Science Workflows<a hidden class="anchor" aria-hidden="true" href="#leveraging-time-based-feature-stores-for-efficient-data-science-workflows">#</a></h1>
+<p>In our previous <a href="https://semyonsinchenko.github.io/ssinchenko/post/effective_feature_store_pyspark/">post</a>, we briefly touched upon the concept of ML feature stores and their significance in streamlining machine learning workflows. Today, we&rsquo;ll again explore a specific type of feature store known as a time-based feature store, which plays a crucial role in handling temporal data and enabling efficient feature retrieval for data science tasks. In this post we&rsquo;ll how a feature-lookup problem may be effectively solved in PySpark using domain knowledge and understanding how Apache Spark works with partitions and columnar data formats.</p>
+<p>Precomputed features stored can significantly speed up the Data Science development process and simplify maintenance, lineage, and data quality tracking. By having a centralized repository of precomputed features, data scientists can easily access and reuse these features across multiple projects, eliminating the need to repeatedly compute them from scratch. This approach saves valuable time and computational resources, allowing data scientists to focus on model development and experimentation rather than feature engineering. Moreover, a feature store acts as a single source of truth for all features, ensuring consistency and reducing the risk of mismatch  between different models or projects. It also simplifies lineage tracking, as the origin and transformations of each feature are well-documented and easily traceable. Additionally, data quality issues can be identified and addressed at the feature level, ensuring that all models consuming those features benefit from the improvements. By centralizing feature management, organizations can avoid the need to implement feature computation, lineage, and data quality tracking for each model separately, leading to a more efficient and maintainable Data Science workflow.</p>
+<h2 id="understanding-time-based-feature-stores">Understanding Time-Based Feature Stores<a hidden class="anchor" aria-hidden="true" href="#understanding-time-based-feature-stores">#</a></h2>
+<p>A time-based feature store is essentially a table that contains precomputed features for each customer at various timepoints over a recent period. This table is typically partitioned by a <code>timecol</code> column, which represents the date on which the features are up-to-date. Each partition within the table includes data in the form of a customer ID (<code>custid</code>) mapped to a set of features.</p>
+<p>For example, consider a scenario where we have a feature store table with one thousand features computed for each customer ID and corresponding date (represented by the <code>timecol</code> partition column). The table structure would look something like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">timecol (partition column) | custid | feature_1 | feature_2 | ... | feature_1000
+</span></span></code></pre></div><h2 id="typical-use-case-leveraging-feature-stores-for-data-science-tasks">Typical Use Case: Leveraging Feature Stores for Data Science Tasks<a hidden class="anchor" aria-hidden="true" href="#typical-use-case-leveraging-feature-stores-for-data-science-tasks">#</a></h2>
+<p>A common use case for leveraging a feature store arises when a data scientist has data in the form of <code>customer_id -&gt; (observation_date, observation, *additional_columns)</code>. The <code>observation_date</code> represents the date wheni, for example, a marketing communication was sent to a customer, and the <code>observation</code> represents the customer&rsquo;s reaction to the marketing communication, such as whether the customer accepted the offer within a week after the communication or not. In terms of ML Models <code>observation</code> is like <code>y</code> variable.</p>
+<p>The task at hand is to create a predictive machine learning model that can estimate the probability of success of a marketing communication for a given customer. To accomplish this, we need to create a dataset in the form of <code>customer_id -&gt; (observation_date, observation, *additional_columns, features)</code>, where the features are retrieved from the feature store.</p>
+<p>It is crucial to avoid leakage of features from the future and ensure that only the latest available features <strong>before</strong> the <code>observation_date</code> are used. This requirement leads to the &ldquo;asOfJoin&rdquo; problem, which involves joining the customer data with the feature store table based on the customer ID and the observation date.</p>
+<h2 id="the-asofjoin-problem">The asOfJoin Problem<a hidden class="anchor" aria-hidden="true" href="#the-asofjoin-problem">#</a></h2>
+<p>The asOfJoin problem revolves around finding the most recent set of features for each customer that were computed before a given observation date. It requires joining the customer data with the feature store table while considering the temporal aspect of the data.</p>
+<p>Conceptually, the asOfJoin operation can be described as follows:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">For each customer ID in the customer data:
+</span></span><span class="line"><span class="cl">    Find the latest available features in the feature store table
+</span></span><span class="line"><span class="cl">    where the timecol is less than or equal to the observation date
+</span></span></code></pre></div><figure>
+    <img loading="lazy" src="/ssinchenko/images/asof/fs_join_problem.png"
+         alt="asOfJoin problem in ML" width="750px"/> <figcaption>
+            asOfJoin problem in DS workflow
+        </figcaption>
+</figure>
+
+<p>The asOfJoin problem is a common challenge in data science workflows, particularly when dealing with time-series data or scenarios where features need to be retrieved based on specific timepoints. In the upcoming sections, we&rsquo;ll dive deeper into the asOfJoin problem, explore various approaches to solve it efficiently, and discuss how important for an engineer do not use generic algorithms blindly but put a domain knowledge into the solution code instead.</p>
+<h2 id="data-generation-and-test-setup">Data Generation and test setup<a hidden class="anchor" aria-hidden="true" href="#data-generation-and-test-setup">#</a></h2>
+<p>To simulate the described above workflow and asOfJoin let&rsquo;s create few feature tables of different size and an observation table.</p>
+<h3 id="data-generation-code">Data Generation Code<a hidden class="anchor" aria-hidden="true" href="#data-generation-code">#</a></h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">uuid1</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">random</span><span class="p">,</span> <span class="n">randint</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span><span class="p">,</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span><span class="p">,</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">Row</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">master</span><span class="p">(</span><span class="s2">&#34;local[*]&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">generate_fs_schema</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="o">.</span><span class="n">StructType</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;custid&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">())]</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;feature_col_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">T</span><span class="o">.</span><span class="n">StructType</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">OBSERVATIONS_SCHEMA</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">StructType</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="p">[</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;custid&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;timecol&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;observation&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">IntegerType</span><span class="p">()),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;additionalColA&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;additionalColB&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;additionalColC&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;additionalColD&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;additionalColE&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;additionalColF&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;additionalColG&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;additionalColH&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&#34;additionalColI&#34;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">N</span> <span class="o">=</span> <span class="mi">100_000</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">CUSTOMER_IDS_ALL</span> <span class="o">=</span> <span class="p">[</span><span class="n">uuid1</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">)]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">CUSTOMER_IDS_OBSERVATIONS</span> <span class="o">=</span> <span class="p">[</span><span class="n">uid</span> <span class="k">for</span> <span class="n">uid</span> <span class="ow">in</span> <span class="n">CUSTOMER_IDS_ALL</span> <span class="k">if</span> <span class="n">random</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mf">.25</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="n">DATES_ALL</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">()</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s2">&#34;2022-01-01&#34;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&#34;2024-01-01&#34;</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s2">&#34;ME&#34;</span><span class="p">)]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">generate_observations</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">DataFrame</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">CUSTOMER_IDS_OBSERVATIONS</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">            <span class="n">Row</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">                <span class="n">custid</span><span class="o">=</span><span class="n">cid</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                <span class="n">timecol</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATES_ALL</span><span class="p">[</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">DATES_ALL</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">)),</span> <span class="s2">&#34;%Y-%m-</span><span class="si">%d</span><span class="s2">&#34;</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">                <span class="n">observation</span><span class="o">=</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">                <span class="n">additionalColA</span><span class="o">=</span><span class="n">random</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">                <span class="n">additionalColB</span><span class="o">=</span><span class="n">random</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">                <span class="n">additionalColC</span><span class="o">=</span><span class="n">random</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">                <span class="n">additionalColD</span><span class="o">=</span><span class="n">random</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">                <span class="n">additionalColE</span><span class="o">=</span><span class="n">random</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">                <span class="n">additionalColF</span><span class="o">=</span><span class="n">random</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">                <span class="n">additionalColG</span><span class="o">=</span><span class="n">random</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">                <span class="n">additionalColH</span><span class="o">=</span><span class="n">random</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">                <span class="n">additionalColI</span><span class="o">=</span><span class="n">random</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">            <span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">OBSERVATIONS_SCHEMA</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">generate_fs_partition</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">StructType</span><span class="p">,</span> <span class="n">date_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataFrame</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">CUSTOMER_IDS_OBSERVATIONS</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&#34;custid&#34;</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">                <span class="n">val</span> <span class="o">=</span> <span class="n">cid</span>
+</span></span><span class="line"><span class="cl">            <span class="k">elif</span> <span class="n">col</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&#34;observation&#34;</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">                <span class="n">val</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">                <span class="n">val</span> <span class="o">=</span> <span class="n">random</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">            <span class="n">res</span><span class="p">[</span><span class="n">col</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Row</span><span class="p">(</span><span class="o">**</span><span class="n">res</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">schema</span><span class="p">)</span>
+</span></span></code></pre></div><p>The code starts by importing necessary libraries and creating a SparkSession.</p>
+<ul>
+<li>The <code>generate_fs_schema</code> function is defined next, which takes an integer <code>n</code> as input and generates a <code>StructType</code> schema for a feature store dataset; The schema includes a &ldquo;custid&rdquo; field of string type and <code>n</code> additional fields named &ldquo;feature_col_i&rdquo; of double type;</li>
+<li>The <code>OBSERVATIONS_SCHEMA</code> is defined as a <code>StructType</code> representing the schema for an observations dataset (or train dataset in terms of ML workflow). It includes fields such as &ldquo;custid&rdquo;, &ldquo;timecol&rdquo;, &ldquo;observation&rdquo;, and additional columns from &ldquo;additionalColA&rdquo; to &ldquo;additionalColI&rdquo; that represents some additional features or informatin, for example a channel of merketing communication;</li>
+<li>The code sets the value of <code>N</code> to 100,000, which represents the number of unique customer IDs to generate. The <code>CUSTOMER_IDS_ALL</code> list is created by generating <code>N</code> unique customer IDs using the <code>uuid1</code> function. The <code>CUSTOMER_IDS_OBSERVATIONS</code> list is created by filtering the <code>CUSTOMER_IDS_ALL</code> list based on a random probability of <code>0.25</code>;</li>
+<li>The <code>DATES_ALL</code> list is created by generating a sequence of dates from &ldquo;2022-01-01&rdquo; to &ldquo;2024-01-01&rdquo; with a monthly frequency using the <code>pd.date_range</code> function. For simplicity we will simulate the case when Feature Store Table has a monthly basis. In other words, we will have all the features for each customer once per month.</li>
+<li>The <code>generate_observations</code> function is defined, which generates a DataFrame representing the observations dataset. It iterates over the <code>CUSTOMER_IDS_OBSERVATIONS</code> list and creates a row for each customer ID with random values for the observation and additional columns. For avoiding a trivial case when observation dates match exactly to end of month we make also a random shift by 0-20 days back;</li>
+<li>The <code>generate_fs_partition</code> function is defined, which generates a DataFrame representing a partition of the feature store dataset. It takes a <code>StructType</code> schema and a date column name as input. It iterates over the <code>CUSTOMER_IDS_OBSERVATIONS</code> list and creates a row for each customer ID with random values for the feature columns.</li>
+</ul>
+<p>The following code generates for us three observation datasets and three Feature Store tables of different size:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="n">OBS</span> <span class="o">=</span> <span class="n">generate_observations</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">OBS</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&#34;overwrite&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;data/OBSERVATIONS&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">OBS</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&#34;overwrite&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;data/OBSERVATIONS_SMALL&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">OBS</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&#34;overwrite&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;data/OBSERVATIONS_TINY&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">SCHEMA_10</span> <span class="o">=</span> <span class="n">generate_fs_schema</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">SCHEMA_50</span> <span class="o">=</span> <span class="n">generate_fs_schema</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">SCHEMA_150</span> <span class="o">=</span> <span class="n">generate_fs_schema</span><span class="p">(</span><span class="mi">150</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="n">date</span> <span class="ow">in</span> <span class="n">DATES_ALL</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">date_str</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="s2">&#34;%Y-%m-</span><span class="si">%d</span><span class="s2">&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">generate_fs_partition</span><span class="p">(</span><span class="n">SCHEMA_10</span><span class="p">,</span> <span class="n">date_str</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&#34;overwrite&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;data/FS_TABLE_10/timecol=</span><span class="si">{</span><span class="n">date_str</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">generate_fs_partition</span><span class="p">(</span><span class="n">SCHEMA_50</span><span class="p">,</span> <span class="n">date_str</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&#34;overwrite&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;data/FS_TABLE_50/timecol=</span><span class="si">{</span><span class="n">date_str</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">generate_fs_partition</span><span class="p">(</span><span class="n">SCHEMA_150</span><span class="p">,</span> <span class="n">date_str</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&#34;overwrite&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;data/FS_TABLE_150/timecol=</span><span class="si">{</span><span class="n">date_str</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
+</span></span></code></pre></div><h3 id="checking-the-generated-data">Checking the generated data<a hidden class="anchor" aria-hidden="true" href="#checking-the-generated-data">#</a></h3>
+<p>We have three observation datasets:</p>
+<ol>
+<li>TINY: <code>1.1 Mb</code>;</li>
+<li>SMALL: <code>2.2 Mb</code>;</li>
+<li>REGULAR: <code>4.2 Mb</code>;</li>
+</ol>
+<p>And we have three feature store tables:</p>
+<ol>
+<li>10 features: <code>65 Mb</code>;</li>
+<li>50 features: <code>251 Mb</code>;</li>
+<li>150 features: <code>717 Mb</code>;</li>
+</ol>
+<p>All three feature tables are partitioned by <code>timecol</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">&gt; dust --depth <span class="m">1</span> FS_TABLE_150/
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  0B   ┌── _SUCCESS           │   0%
+</span></span><span class="line"><span class="cl">4.0K   ├── ._SUCCESS.crc      │   0%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2022-01-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2022-02-28 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2022-03-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2022-04-30 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2022-05-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2022-06-30 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2022-07-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2022-08-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2022-09-30 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2022-10-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2022-11-30 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2022-12-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2023-01-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2023-02-28 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2023-03-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2023-04-30 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2023-05-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2023-06-30 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2023-07-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2023-08-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2023-09-30 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2023-10-31 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2023-11-30 │   4%
+</span></span><span class="line"><span class="cl"> 29M   ├── <span class="nv">timecol</span><span class="o">=</span>2023-12-31 │   4%
+</span></span><span class="line"><span class="cl">717M ┌─┴ FS_TABLE_150        
+</span></span></code></pre></div><h2 id="why-partitioning-is-important">Why partitioning is important?<a hidden class="anchor" aria-hidden="true" href="#why-partitioning-is-important">#</a></h2>
+<p>Apache Spark&rsquo;s optimizer can leverage information about partitioning and min/max values from Parquet file headers to optimize query execution and reduce the amount of data that needs to be read.</p>
+<p>Partitioning:</p>
+<ul>
+<li>When data is partitioned based on certain columns, Spark can use this information to prune partitions that are not relevant to the query.</li>
+<li>If a query has filters on the partitioning columns, Spark can identify which partitions satisfy the filter conditions and skip reading the irrelevant partitions entirely.</li>
+<li>This partition pruning optimization can significantly reduce the amount of data scanned and improve query performance.</li>
+</ul>
+<p>Min/Max Values in Parquet File Headers:</p>
+<ul>
+<li>Parquet files contain metadata in their headers, including the minimum and maximum values for each column within the file.</li>
+<li>Spark&rsquo;s optimizer can utilize this information to determine if a file needs to be read based on the query&rsquo;s filter conditions.</li>
+<li>If the filter condition falls outside the range of min/max values for a column in a Parquet file, Spark can skip reading that file altogether.</li>
+<li>By avoiding unnecessary file scans, Spark can optimize query execution and reduce the amount of I/O operations.</li>
+</ul>
+<p>Combining Partitioning and Min/Max Values:</p>
+<ul>
+<li>When data is partitioned and stored in Parquet format, Spark can leverage both partitioning information and min/max values for optimization.</li>
+<li>Spark can first prune irrelevant partitions based on the partitioning scheme and query filters.</li>
+<li>Within the remaining partitions, Spark can further utilize the min/max values from the Parquet file headers to determine which files need to be read.</li>
+<li>By combining these optimizations, Spark can significantly reduce the amount of data scanned and improve query performance.</li>
+</ul>
+<blockquote>
+<p><strong><em>NOTE:</em></strong> By leveraging partition pruning, projection pushdowm and predicate pushdown it is possible to allow Spark/PySpark to work in a hard out-of-core mode, when the overall size of data on disks is much much bigger than the amount of available memory!</p>
+</blockquote>
+<h2 id="benchmarking-preparation">Benchmarking preparation<a hidden class="anchor" aria-hidden="true" href="#benchmarking-preparation">#</a></h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="n">spark</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">SparkSession</span>
+</span></span><span class="line"><span class="cl">    <span class="o">.</span><span class="n">builder</span>
+</span></span><span class="line"><span class="cl">    <span class="o">.</span><span class="n">master</span><span class="p">(</span><span class="s2">&#34;local[*]&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="s2">&#34;spark.sql.autoBroadcastJoinThreshold&#34;</span><span class="p">,</span> <span class="s2">&#34;-1&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">spark</span><span class="o">.</span><span class="n">sparkContext</span><span class="o">.</span><span class="n">setLogLevel</span><span class="p">(</span><span class="s2">&#34;ERROR&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">observations</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;data/OBSERVATIONS/&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">observations_tiny</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;data/OBSERVATIONS_TINY/&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">observations_small</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;data/OBSERVATIONS_SMALL/&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">features_10</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;data/FS_TABLE_10/&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">features_50</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;data/FS_TABLE_50/&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">features_150</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;data/FS_TABLE_150/&#34;</span><span class="p">)</span> 
+</span></span></code></pre></div><blockquote>
+<p><strong><em>NOTE:</em></strong> We explicitly disabled broadcast joins here juyst because I&rsquo;m using an old Dell laptop with 16G of memory and an old i3-8145U. In my case an observation data that my laptop can process is so small that it will be implicitly broadcasted in almost any asOgJoin implementation. But on real-world problems when observation data contains tipically 100k - 1M of rows with a lot of additional columns, so auto-broadcasting won&rsquo;t help anyway.</p>
+</blockquote>
+<h2 id="asofjoin-techniques">asOfJoin techniques<a hidden class="anchor" aria-hidden="true" href="#asofjoin-techniques">#</a></h2>
+<p>There are few alvailable generic <code>asOfJoin</code> implementations in PySpark. We will focus mostly on two of them:</p>
+<ol>
+<li>Multiple Join and Aggregate</li>
+<li>Union-based</li>
+</ol>
+<h3 id="multiple-join-and-aggragate">Multiple Join and Aggragate<a hidden class="anchor" aria-hidden="true" href="#multiple-join-and-aggragate">#</a></h3>
+<p>This algorithm is implemnted directly in Apache Spark and can be used from PySpark by invoking <a href="https://spark.apache.org/docs/latest/api/python/reference/pyspark.pandas/api/pyspark.pandas.merge_asof.html"><code>pyspark.pandas.merge_asof</code></a>. Let&rsquo;s see how it works. There is a cool docstring that explains the idea in the <a href="https://github.com/apache/spark/blob/85c4f053f25a7f20546600e179a7303a4409834f/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/optimizer/RewriteAsOfJoin.scala#L26">Apache Spark Source Code</a>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="cm">/**
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * Replaces logical [[AsOfJoin]] operator using a combination of Join and Aggregate operator.
+</span></span></span><span class="line"><span class="cl"><span class="cm">...
+</span></span></span><span class="line"><span class="cl"><span class="cm">...
+</span></span></span><span class="line"><span class="cl"><span class="cm">**/</span>
+</span></span><span class="line"><span class="cl"><span class="k">object</span> <span class="nc">RewriteAsOfJoin</span> <span class="k">extends</span> <span class="nc">Rule</span><span class="o">[</span><span class="kt">LogicalPlan</span><span class="o">]</span>
+</span></span></code></pre></div><p>It transform the following pseudo-query:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="k">left</span><span class="w"> </span><span class="n">ASOF</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="k">right</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="p">(</span><span class="n">condition</span><span class="p">,</span><span class="w"> </span><span class="n">as_of</span><span class="w"> </span><span class="k">on</span><span class="p">(</span><span class="k">left</span><span class="p">.</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="k">right</span><span class="p">.</span><span class="n">t</span><span class="p">),</span><span class="w"> </span><span class="n">tolerance</span><span class="p">)</span><span class="w">
+</span></span></span></code></pre></div><p>to the following query:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">SELECT</span><span class="w"> </span><span class="k">left</span><span class="p">.</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="n">__right__</span><span class="p">.</span><span class="o">*</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">FROM</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">     </span><span class="k">SELECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="k">left</span><span class="p">.</span><span class="o">*</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">               </span><span class="k">SELECT</span><span class="w"> </span><span class="n">MIN_BY</span><span class="p">(</span><span class="n">STRUCT</span><span class="p">(</span><span class="k">right</span><span class="p">.</span><span class="o">*</span><span class="p">),</span><span class="w"> </span><span class="k">left</span><span class="p">.</span><span class="n">t</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="k">right</span><span class="p">.</span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">__nearest_right__</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">               </span><span class="k">FROM</span><span class="w"> </span><span class="k">right</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">               </span><span class="k">WHERE</span><span class="w"> </span><span class="n">condition</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="k">left</span><span class="p">.</span><span class="n">t</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="k">right</span><span class="p">.</span><span class="n">t</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="k">right</span><span class="p">.</span><span class="n">t</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="k">left</span><span class="p">.</span><span class="n">t</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">tolerance</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">__right__</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">     </span><span class="k">FROM</span><span class="w"> </span><span class="k">left</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">     </span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">WHERE</span><span class="w"> </span><span class="n">__right__</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w">
+</span></span></span></code></pre></div><h4 id="multiple-join-and-aggregate-join-on-the-feature-lookup-problem">Multiple Join and Aggregate Join on the Feature Lookup problem<a hidden class="anchor" aria-hidden="true" href="#multiple-join-and-aggregate-join-on-the-feature-lookup-problem">#</a></h4>
+<p>In the case of Features Lookup problem we can use Pandas on Spark (previously known as Koalas):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">pyspark</span> <span class="kn">import</span> <span class="n">pandas</span> <span class="k">as</span> <span class="n">koalas</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">asofjoin_koalas</span><span class="p">(</span><span class="n">obs</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataFrame</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">obs</span> <span class="o">=</span> <span class="n">obs</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&#34;timecol&#34;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">to_date</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;timecol&#34;</span><span class="p">),</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&#34;yyyy-MM-dd&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="n">res</span> <span class="o">=</span> <span class="n">koalas</span><span class="o">.</span><span class="n">merge_asof</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">obs</span><span class="o">.</span><span class="n">to_pandas_on_spark</span><span class="p">(),</span> <span class="n">right</span><span class="o">=</span><span class="n">fs</span><span class="o">.</span><span class="n">to_pandas_on_spark</span><span class="p">(),</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s2">&#34;timecol&#34;</span><span class="p">],</span> <span class="n">by</span><span class="o">=</span><span class="s2">&#34;custid&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">spark</span><span class="o">.</span><span class="n">frame</span><span class="p">()</span>  
+</span></span></code></pre></div><p>Unfortunately, because of the full-read into memory of Feature Table the complexity of the overall task won&rsquo;t depend of the size of observation tabele. Obviously any try to run that code will tend to OOM on a local setup and most probably to the endless disk spill on a real-worlds cluster:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="o">%%</span><span class="n">time</span>
+</span></span><span class="line"><span class="cl"><span class="n">asofjoin_koalas</span><span class="p">(</span><span class="n">observations_tiny</span><span class="p">,</span> <span class="n">features_10</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&#34;overwrite&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;tmp/temp_test&#34;</span><span class="p">)</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">java.lang.OutOfMemoryError: Java heap space
+</span></span></code></pre></div><p>It fails even on a tiny data, but it is actually because of the size of FS table.</p>
+<h3 id="union-based-approach">Union based approach<a hidden class="anchor" aria-hidden="true" href="#union-based-approach">#</a></h3>
+<p>Union-based approach is based on the idea of union two data and apply a <code>LAST(col, ignorenulls=true) OVER WINDOW PARTIION BY join-key ORDER BY time_fs WHERE time_fs &lt;= time_obs</code>. This approach is used, for example, in Databricks Labs <a href="https://github.com/databrickslabs/tempo/blob/0e626728d7fcb4419e9d0eda5bcd81c912b268bc/python/tempo/tsdf.py#L194"><code>DBL Tempo</code></a> project.</p>
+<p><strong><em>NOTE:</em></strong> Due to a hard license limitation of <code>DBL Tempo</code> project from Databricks Labs that is destributed under Databricks commerical license I cannot use it my benchmark.</p>
+<h4 id="the-problem-of-union-approach">The problem of Union approach<a hidden class="anchor" aria-hidden="true" href="#the-problem-of-union-approach">#</a></h4>
+<p>Unfortunately we will face the same probelm with union like with <code>koalas</code>: Union not only required a full table read but also required a full table shuffle. It will always tend to a shaffle of all the features from the disk to the memory and to huge disk spill.</p>
+<h3 id="using-a-domain-knowledge">Using a domain knowledge<a hidden class="anchor" aria-hidden="true" href="#using-a-domain-knowledge">#</a></h3>
+<p>As one may see, generic approaches to asOfJoin problem looks like non working in a case of Features Lookup. What can we do here? We can do what each engineer should do: use domain knowledge. Let&rsquo;s see what can we use:</p>
+<ol>
+<li>Features Table is much bigger that observations</li>
+<li>Features Table is optimized for direct join by timecol (partition prunning and pre-partitioning) and custid (min-max in header of parquet files)</li>
+</ol>
+<h4 id="proposed-algorithm">Proposed algorithm<a hidden class="anchor" aria-hidden="true" href="#proposed-algorithm">#</a></h4>
+<p>Let&rsquo;s try the following algorithm:</p>
+<ol>
+<li>Take only keys (id -&gt; time) from observations</li>
+<li>Take only keys (id -&gt; time) from fs table</li>
+<li>Use left join by id:</li>
+</ol>
+<ul>
+<li>We know that observation is a small table</li>
+<li>We are taking only tow columns</li>
+<li>We are able to make explicit broadcast due to these facts</li>
+</ul>
+<ol start="4">
+<li>For each id from observation get the latest time from FS by <code>groupBy</code> + <code>max</code></li>
+<li>Take the table from p.4, that has a dimension <code>N_observation x 2</code> (small table, two columns)</li>
+<li>Join that table to FeatureStore table:</li>
+</ol>
+<ul>
+<li>Left join: one key is partition, another key is unique in partition (we can leverage pushdown/prunning)</li>
+<li>Right table is small and has only two columns</li>
+<li>We can use explicit broadcast of the right table here</li>
+</ul>
+<ol start="7">
+<li>Join resulted table with observations: simple inner join, no duplicates/nulls</li>
+</ol>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">asofjoin_manual</span><span class="p">(</span><span class="n">obs</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataFrame</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">only_ids_left</span> <span class="o">=</span> <span class="n">obs</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&#34;custid&#34;</span><span class="p">,</span> <span class="s2">&#34;timecol&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">only_ids_right</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;custid&#34;</span><span class="p">),</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;timecol&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&#34;timecol_right&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="n">cond</span> <span class="o">=</span> <span class="p">(</span><span class="n">only_ids_left</span><span class="o">.</span><span class="n">custid</span> <span class="o">==</span> <span class="n">only_ids_right</span><span class="o">.</span><span class="n">custid</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">only_ids_left</span><span class="o">.</span><span class="n">timecol</span> <span class="o">&lt;=</span> <span class="n">only_ids_right</span><span class="o">.</span><span class="n">timecol_right</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">cross</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">only_ids_right</span>
+</span></span><span class="line"><span class="cl">        <span class="o">.</span><span class="n">join</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">            <span class="n">F</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">only_ids_left</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">            <span class="n">on</span><span class="o">=</span><span class="n">cond</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="n">how</span><span class="o">=</span><span class="s2">&#34;left&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">only_ids_right</span><span class="o">.</span><span class="n">custid</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">final_ids_fs</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">cross</span>
+</span></span><span class="line"><span class="cl">        <span class="o">.</span><span class="n">groupBy</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;custid&#34;</span><span class="p">),</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;timecol&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&#34;timecol_obs&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s2">&#34;timecol_right&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&#34;timecol&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">selected_features</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">fs</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">            <span class="n">F</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">final_ids_fs</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">            <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s2">&#34;custid&#34;</span><span class="p">,</span> <span class="s2">&#34;timecol&#34;</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">            <span class="n">how</span><span class="o">=</span><span class="s2">&#34;left&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&#34;timecol_fs&#34;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;timecol&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&#34;timecol&#34;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&#34;timecol_obs&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">selected_features</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">observations</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s2">&#34;custid&#34;</span><span class="p">,</span> <span class="s2">&#34;timecol&#34;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s2">&#34;inner&#34;</span><span class="p">)</span>
+</span></span></code></pre></div><h4 id="tests">Tests<a hidden class="anchor" aria-hidden="true" href="#tests">#</a></h4>
+<p><strong>SMALL FEATURE STORE</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="o">%%</span><span class="n">time</span>
+</span></span><span class="line"><span class="cl"><span class="n">asofjoin_manual</span><span class="p">(</span><span class="n">observations</span><span class="p">,</span> <span class="n">features_10</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&#34;overwrite&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;tmp/temp_test&#34;</span><span class="p">)</span>
+</span></span></code></pre></div><p><strong>Result:</strong> success, 3.5 sec</p>
+<p><strong>MEDIUM FEATURE STORE</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="o">%%</span><span class="n">time</span>
+</span></span><span class="line"><span class="cl"><span class="n">asofjoin_manual</span><span class="p">(</span><span class="n">observations</span><span class="p">,</span> <span class="n">features_50</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&#34;overwrite&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;tmp/temp_test&#34;</span><span class="p">)</span>
+</span></span></code></pre></div><p><strong>Result:</strong> sucess, 4.64 sec</p>
+<p><strong>BIG FEATURE STORE</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="o">%%</span><span class="n">time</span>
+</span></span><span class="line"><span class="cl"><span class="n">asofjoin_manual</span><span class="p">(</span><span class="n">observations</span><span class="p">,</span> <span class="n">features_150</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="s2">&#34;overwrite&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&#34;tmp/temp_test&#34;</span><span class="p">)</span>
+</span></span></code></pre></div><p><strong>Result:</strong> sucess, 8.95 sec</p>
+<h4 id="analysis">Analysis<a hidden class="anchor" aria-hidden="true" href="#analysis">#</a></h4>
+<p>As one may see, our appraoch is working with any size of Featore Store because in our algorithm the complexity depends mostly of the size of observations that is a relative small piece of data. And also we can use all the benefits of partitioning structure and uniqeness of the Id column within partitions. Additional sorting the data before writeing (for example, in <code>DeltaLake</code> it may be achieved by <code>Z ORDER</code>) will provide additional benefits!</p>
+<h2 id="conclusion">Conclusion<a hidden class="anchor" aria-hidden="true" href="#conclusion">#</a></h2>
+<p>Domain knowledge is crucial for Data Engineers when writing logic because it enables them to make informed decisions and optimize their algorithms for specific tasks. By understanding the size of tables, partitioning schemes, and other domain-specific information, Data Engineers can tailor their algorithms to be more effective and efficient for the given use case. Generic data algorithms, while designed to be applicable in a wide range of scenarios, often sacrifice effectiveness in favor of generality. This is because there is no &ldquo;free lunch&rdquo; in algorithm design, meaning that an algorithm that performs well on all possible inputs is unlikely to exist. Instead, by leveraging their domain knowledge, Data Engineers can create custom algorithms that are specifically designed to handle the unique characteristics and constraints of their data. This approach leads to improved performance, scalability, and resource utilization, ultimately resulting in more effective and efficient data processing pipelines.</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/ssinchenko/tags/pyspark/">Pyspark</a></li>
+      <li><a href="http://localhost:1313/ssinchenko/tags/feature-store/">Feature-Store</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="next" href="http://localhost:1313/ssinchenko/post/effective_feature_store_pyspark/">
+    <span class="title">Next »</span>
+    <br>
+    <span>Computing ML Feature Store in PySpark</span>
+  </a>
+</nav>
+
+
+<ul class="share-buttons">
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Effective asOfJoin in PySpark for Feature Store on x"
+            href="https://x.com/intent/tweet/?text=Effective%20asOfJoin%20in%20PySpark%20for%20Feature%20Store&amp;url=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2ffs_asof_problem_pyspark%2f&amp;hashtags=pyspark%2cfeature-store">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M512 62.554 L 512 449.446 C 512 483.97 483.97 512 449.446 512 L 62.554 512 C 28.03 512 0 483.97 0 449.446 L 0 62.554 C 0 28.03 28.029 0 62.554 0 L 449.446 0 C 483.971 0 512 28.03 512 62.554 Z M 269.951 190.75 L 182.567 75.216 L 56 75.216 L 207.216 272.95 L 63.9 436.783 L 125.266 436.783 L 235.9 310.383 L 332.567 436.783 L 456 436.783 L 298.367 228.367 L 432.367 75.216 L 371.033 75.216 Z M 127.633 110 L 164.101 110 L 383.481 400.065 L 349.5 400.065 Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Effective asOfJoin in PySpark for Feature Store on linkedin"
+            href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2ffs_asof_problem_pyspark%2f&amp;title=Effective%20asOfJoin%20in%20PySpark%20for%20Feature%20Store&amp;summary=Effective%20asOfJoin%20in%20PySpark%20for%20Feature%20Store&amp;source=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2ffs_asof_problem_pyspark%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Effective asOfJoin in PySpark for Feature Store on reddit"
+            href="https://reddit.com/submit?url=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2ffs_asof_problem_pyspark%2f&title=Effective%20asOfJoin%20in%20PySpark%20for%20Feature%20Store">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Effective asOfJoin in PySpark for Feature Store on facebook"
+            href="https://facebook.com/sharer/sharer.php?u=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2ffs_asof_problem_pyspark%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Effective asOfJoin in PySpark for Feature Store on whatsapp"
+            href="https://api.whatsapp.com/send?text=Effective%20asOfJoin%20in%20PySpark%20for%20Feature%20Store%20-%20http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2ffs_asof_problem_pyspark%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Effective asOfJoin in PySpark for Feature Store on telegram"
+            href="https://telegram.me/share/url?text=Effective%20asOfJoin%20in%20PySpark%20for%20Feature%20Store&amp;url=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2ffs_asof_problem_pyspark%2f">
+            <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Effective asOfJoin in PySpark for Feature Store on ycombinator"
+            href="https://news.ycombinator.com/submitlink?t=Effective%20asOfJoin%20in%20PySpark%20for%20Feature%20Store&u=http%3a%2f%2flocalhost%3a1313%2fssinchenko%2fpost%2ffs_asof_problem_pyspark%2f">
+            <svg version="1.1" xml:space="preserve" width="30px" height="30px" viewBox="0 0 512 512" fill="currentColor"
+                xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+                <path
+                    d="M449.446 0C483.971 0 512 28.03 512 62.554L512 449.446C512 483.97 483.97 512 449.446 512L62.554 512C28.03 512 0 483.97 0 449.446L0 62.554C0 28.03 28.029 0 62.554 0L449.446 0ZM183.8767 87.9921H121.8427L230.6673 292.4508V424.0079H281.3328V292.4508L390.1575 87.9921H328.1233L256 238.2489z" />
+            </svg>
+        </a>
+    </li>
+</ul>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2024 <a href="http://localhost:1313/ssinchenko/">Sem Sinchenko</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

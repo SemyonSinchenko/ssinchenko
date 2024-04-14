@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Feature-Store on Sem Sinchenko</title>
+    <link>http://localhost:1313/ssinchenko/tags/feature-store/</link>
+    <description>Recent content in Feature-Store on Sem Sinchenko</description>
+    <image>
+      <title>Sem Sinchenko</title>
+      <url>http://localhost:1313/ssinchenko/images/avatar-favicon.png</url>
+      <link>http://localhost:1313/ssinchenko/images/avatar-favicon.png</link>
+    </image>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 14 Apr 2024 13:42:36 +0200</lastBuildDate>
+    <atom:link href="http://localhost:1313/ssinchenko/tags/feature-store/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Effective asOfJoin in PySpark for Feature Store</title>
+      <link>http://localhost:1313/ssinchenko/post/fs_asof_problem_pyspark/</link>
+      <pubDate>Sun, 14 Apr 2024 13:42:36 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/fs_asof_problem_pyspark/</guid>
+      <description>Leveraging Time-Based Feature Stores for Efficient Data Science Workflows In our previous post, we briefly touched upon the concept of ML feature stores and their significance in streamlining machine learning workflows. Today, we&amp;rsquo;ll again explore a specific type of feature store known as a time-based feature store, which plays a crucial role in handling temporal data and enabling efficient feature retrieval for data science tasks. In this post we&amp;rsquo;ll how a feature-lookup problem may be effectively solved in PySpark using domain knowledge and understanding how Apache Spark works with partitions and columnar data formats.</description>
+    </item>
+  </channel>
+</rss>
