@@ -6,6 +6,7 @@ categories:
   - data-engineering
 tags:
   - pyspark
+  - feature-store
 author:
   - "Sem Sinchenko"
 cover:
