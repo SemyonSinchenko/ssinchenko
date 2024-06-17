@@ -3,7 +3,10 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://localhost:1313/ssinchenko/</loc>
-    <lastmod>2024-04-14T13:42:36+02:00</lastmod>
+    <lastmod>2024-06-17T20:00:00+02:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/ssinchenko/post/</loc>
+    <lastmod>2024-06-17T20:00:00+02:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/ssinchenko/categories/</loc>
     <lastmod>2024-04-14T13:42:36+02:00</lastmod>
@@ -14,7 +17,7 @@
     <loc>http://localhost:1313/ssinchenko/post/fs_asof_problem_pyspark/</loc>
     <lastmod>2024-04-14T13:42:36+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/ssinchenko/post/</loc>
+    <loc>http://localhost:1313/ssinchenko/tags/feature-store/</loc>
     <lastmod>2024-04-14T13:42:36+02:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/ssinchenko/tags/pyspark/</loc>

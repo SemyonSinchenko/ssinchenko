@@ -1,36 +1,15 @@
 baseurl = "https://semyonsinchenko.gihub.io/ssinchenko/"
 DefaultContentLanguage = "en"
 title = "Sem Sinchenko"
-#theme = "beautifulhugo"
 theme = "PaperMod"
 pygmentsStyle = "trac"
 pygmentsUseClasses = true
 pygmentsCodeFences = true
 pygmentsCodefencesGuessSyntax = true
 pygmentsUseClassic = true
-#pygmentOptions = "linenos=inline"
-#disqusShortname = "XXX"
-#googleAnalytics = "XXX"
 enableRobotsTXT = true
 
 staticDir = ["static"]
-
-# [Params]
-#   homeTitle = "Sem Sinchenko"
-#   subtitle = "My private blog about me, my life and my work."
-#   mainSections = ["post","posts"]
-#   logo = "img/avatar-icon.png" # Expecting square dimensions
-#   favicon = "img/favicon.ico"
-#   dateFormat = "January 2, 2006"
-#   commit = false
-#   rss = true
-#   comments = true
-#   readingTime = true
-#   wordCount = true
-#   useHLJS = true
-#   socialShare = true
-#   delayDisqus = true
-#   showRelatedPosts = true
 
 [params]
   env = "production"
@@ -44,6 +23,7 @@ staticDir = ["static"]
   ShowCodeCopyButtons = true
   ShowRssButtonInSectionTermList = true
   images = [ "images/avatar-favicon.png" ]
+  params.mainSections = ["post"]
 
 [params.profileMode]
   enabled = false

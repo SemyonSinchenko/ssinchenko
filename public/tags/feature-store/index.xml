@@ -20,5 +20,12 @@
       <guid>http://localhost:1313/ssinchenko/post/fs_asof_problem_pyspark/</guid>
       <description>Leveraging Time-Based Feature Stores for Efficient Data Science Workflows In our previous post, we briefly touched upon the concept of ML feature stores and their significance in streamlining machine learning workflows. Today, we&amp;rsquo;ll again explore a specific type of feature store known as a time-based feature store, which plays a crucial role in handling temporal data and enabling efficient feature retrieval for data science tasks. In this post we&amp;rsquo;ll how a feature-lookup problem may be effectively solved in PySpark using domain knowledge and understanding how Apache Spark works with partitions and columnar data formats.</description>
     </item>
+    <item>
+      <title>Computing ML Feature Store in PySpark</title>
+      <link>http://localhost:1313/ssinchenko/post/effective_feature_store_pyspark/</link>
+      <pubDate>Sun, 07 Apr 2024 16:01:25 +0200</pubDate>
+      <guid>http://localhost:1313/ssinchenko/post/effective_feature_store_pyspark/</guid>
+      <description>In this blog post, I will share my experience in building an ML Feature Store using PySpark. I will demonstrate how one can utilize case-when expressions to generate multiple aggregations with minimal data shuffling across the cluster. This approach is significantly more efficient than the naive method of using a combination of groupBy and pivot for generating aggregations (or features in ML terms).</description>
+    </item>
   </channel>
 </rss>

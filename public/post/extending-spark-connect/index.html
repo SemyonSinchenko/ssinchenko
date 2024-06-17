@@ -55,7 +55,10 @@
         }
 
     </style>
-</noscript><meta property="og:title" content="Extending Spark Connect" />
+</noscript>
+  
+
+<meta property="og:title" content="Extending Spark Connect" />
 <meta property="og:description" content="This blog post presents a very detailed step-by-step guide on how to create a SparkConnect protocol extension in Java and call it from PySpark. It will also cover a topic about how to define all the necessary proto3 messages for it. At the end of this guide you will have a way to interact with Spark JVM from PySpark almost like you can with py4j in a non-connect version." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="http://localhost:1313/ssinchenko/post/extending-spark-connect/" />
@@ -230,9 +233,12 @@
 
 <p>For a top-level overview, you can check out an <a href="https://spark.apache.org/docs/latest/spark-connect-overview.html">Overview in Spark Documentation</a>. For a deeper dive into the topic I recommend this <a href="https://www.waitingforcode.com/apache-spark/what-new-apache-spark-3.4.0-spark-connect/read">nice blog post by Bartosz Konieczny</a> or the video of Martin Grund&rsquo;s presentation:</p>
 
-<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
-  <iframe src="https://www.youtube.com/embed/IbxmZwnzLT0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" allowfullscreen title="YouTube Video"></iframe>
-</div>
+
+    
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+      <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" loading="eager" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/IbxmZwnzLT0?autoplay=0&controls=1&end=0&loop=0&mute=0&start=0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" title="YouTube video"
+      ></iframe>
+    </div>
 
 <h3 id="how-the-post-is-organized">How the post is organized<a hidden class="anchor" aria-hidden="true" href="#how-the-post-is-organized">#</a></h3>
 <ul>
