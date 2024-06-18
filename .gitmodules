@@ -11,5 +11,5 @@
 	path = themes/beautifulhugo
 	url = https://github.com/halogenica/beautifulhugo.git
 [submodule "themes/PaperMod"]
-	path = themes/PaperMod
+	path = themes/PaperMod.tmp
 	url = https://github.com/adityatelange/hugo-PaperMod.git
