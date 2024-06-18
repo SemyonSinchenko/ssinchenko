@@ -44,7 +44,7 @@ Of course, Ranger is very old, very complex, very hard to use, and as a person w
 
 But let's put aside Databricks' aggressive marketing. [[https://github.com/mateiz][Matei Zaharia]] [[https://github.com/unitycatalog/unitycatalog/tree/main][open-sourced]] Unitycatalog in a live session at the recent Data+Ai Summit, and it was cool! So let's dive into the code and see what it can do for us compared to the state of the art.
 
-** Persisten storage
+** Persistent storage
 
 Let's start with one of the most important parts: persistent storage. Apache Ranger supports several backend RDBMSs for storing policies and accesses (MySQL, PostgreSQL, etc.). During configuration, you'll need to provide an existing database, and Ranger will create all its tables as part of the initialization process. Databricks Unitycatalog has both an advantage and a disadvantage. The upside is that Unity comes with an included (as a dependency) [[https://h2database.com/html/main.html][H2DB]]. The disadvantage is that Unity currently only supports H2DB. And this H2DB file is created in ~/etc/~, so you cannot easily separate the policy server from the policy store. Migrating and backing up the DB is also difficult.
 
