@@ -71,7 +71,6 @@
 
 
 
-
     
         <link rel="preconnect" href="https://plausible.io">
     <!-- Dev mode : We do not load plausible script to avoid bloating your stats -->
@@ -94,18 +93,20 @@
 
     
 
+
   
 
 <meta property="og:title" content="Using Pyenv with NixOS" />
 <meta property="og:description" content="The problem Recently I decided to switch from Ubuntu to NixOS. Do not ask me why, it was just for fun mostly. One of the main ideas behind NixOS is to separation of dependencies: each new package is installed into separate sandbox with own scope of dependencies. By design it should make system significantly more stable but sometimes there are problems. One of such problems I faced with pyenv – a tool for simplifying python versions management." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="http://localhost:1313/ssinchenko/post/using-pyenv-with-nixos/" /><meta property="og:image" content="http://localhost:1313/ssinchenko/images/avatar-favicon.png"/><meta property="article:section" content="post" />
+<meta property="og:url" content="http://localhost:1313/ssinchenko/post/using-pyenv-with-nixos/" />
+<meta property="og:image" content="http://localhost:1313/ssinchenko/images/avatar-favicon.png" />
+<meta property="article:section" content="post" />
 <meta property="article:published_time" content="2023-09-29T17:29:05+02:00" />
 <meta property="article:modified_time" content="2023-09-29T17:29:05+02:00" />
 
-<meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:image" content="http://localhost:1313/ssinchenko/images/avatar-favicon.png"/>
-
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="http://localhost:1313/ssinchenko/images/avatar-favicon.png" />
 <meta name="twitter:title" content="Using Pyenv with NixOS"/>
 <meta name="twitter:description" content="The problem Recently I decided to switch from Ubuntu to NixOS. Do not ask me why, it was just for fun mostly. One of the main ideas behind NixOS is to separation of dependencies: each new package is installed into separate sandbox with own scope of dependencies. By design it should make system significantly more stable but sometimes there are problems. One of such problems I faced with pyenv – a tool for simplifying python versions management."/>
 
@@ -143,7 +144,7 @@
   "articleBody": " The problem Recently I decided to switch from Ubuntu to NixOS. Do not ask me why, it was just for fun mostly. One of the main ideas behind NixOS is to separation of dependencies: each new package is installed into separate sandbox with own scope of dependencies. By design it should make system significantly more stable but sometimes there are problems. One of such problems I faced with pyenv – a tool for simplifying python versions management.\nAdding pyenv to your NixOS configuration The simplest way to install pyenv in NixOS is to add the following lines to your /etc/nixos/configuration.nix:\n{ config, pkgs, ... }: let unstableTarball = fetchTarball \"https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz\"; in { ... nixpkgs.config = { allowUnfree = true; packageOverrides = pkgs: with pkgs; { unstable = import unstableTarball { config = config.nixpkgs.config; }; }; }; environment.systemPackages = with pkgs; [ pkgs.gcc pkgs.gnumake pkgs.zlib pkgs.libffi pkgs.readline pkgs.bzip2 pkgs.openssl pkgs.ncurses unstable.pyenv ]; } Here we do the following:\nAdd a link to unstable channel of nix packages; Defina an additional source and name it unstable Add zlib, libffi, readline, bzip2, openssl, ncurses because we need them to build Python Add unstable.pyenv to install the latest available version of Pyenv Trying pyenv and getting an error… After sudo nixos-rebuild switch you will be able to try pyenv install python3.10 but most probably you immediatly gen an error like this one:\nzipimport.ZipImportError: can't decompress data; zlib not available It may looks strange because we installed zlib but the root of this problem is in the main benefit of NixOS: zlib .h and .so files are installed into container and gcc cannot find them when trying to build Python.\nMagic that works for me Maybe it is not the right way but it worked for me. We need to spicefy additional libraries and search path for headers via environment variables. Because NixOS install libraries in paths that contains hashes there is no unified and constant place like /usr/lib that may be hardcoded. Because of this I added the following lines into my configuration.nix:\nenvironment.sessionVariables = { PYENV_ROOT=\"$HOME/.pyenv\"; # pyenv flags to be able to install Python CPPFLAGS=\"-I${pkgs.zlib.dev}/include -I${pkgs.libffi.dev}/include -I${pkgs.readline.dev}/include -I${pkgs.bzip2.dev}/include -I${pkgs.openssl.dev}/include\"; CXXFLAGS=\"-I${pkgs.zlib.dev}/include -I${pkgs.libffi.dev}/include -I${pkgs.readline.dev}/include -I${pkgs.bzip2.dev}/include -I${pkgs.openssl.dev}/include\"; CFLAGS=\"-I${pkgs.openssl.dev}/include\"; LDFLAGS=\"-L${pkgs.zlib.out}/lib -L${pkgs.libffi.out}/lib -L${pkgs.readline.out}/lib -L${pkgs.bzip2.out}/lib -L${pkgs.openssl.out}/lib\"; CONFIGURE_OPTS=\"-with-openssl=${pkgs.openssl.dev}\"; PYENV_VIRTUALENV_DISABLE_PROMPT=\"1\"; }; In this case we are spicifying all the paths and also directly point to OpenSSL installation. After that pyenv install start working correctly. I spent a lot of time trying to find a right way to specify this variables, so I hope my short post may safe this time for someone else!\n",
   "wordCount" : "423",
   "inLanguage": "en",
-  "datePublished": "2023-09-29T17:29:05+02:00",
+  "image": "http://localhost:1313/ssinchenko/images/avatar-favicon.png","datePublished": "2023-09-29T17:29:05+02:00",
   "dateModified": "2023-09-29T17:29:05+02:00",
   "author":{
     "@type": "Person",
@@ -202,8 +203,6 @@
                         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                     </svg>
                 </button>
-                <ul class="lang-switch"><li>|</li>
-                </ul>
             </div>
         </div>
         <ul id="menu">
@@ -437,7 +436,8 @@ In this case we are spicifying all the paths and also directly point to <code cl
     </main>
     
 <footer class="footer">
-    <span>&copy; 2024 <a href="http://localhost:1313/ssinchenko/">Sem Sinchenko</a></span>
+        <span>&copy; 2024 <a href="http://localhost:1313/ssinchenko/">Sem Sinchenko</a></span> · 
+
     <span>
         Powered by
         <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &

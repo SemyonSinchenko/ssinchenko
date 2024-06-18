@@ -115,6 +115,8 @@ About any questions related to this blog you can contact me via email: ssinchenk
 [module]
     [[module.imports]]
         path = "github.com/divinerites/plausible-hugo"
+    [[module.imports]]
+        path = "github.com/adityatelange/hugo-PaperMod"
 
 [params.plausible]
   enable = true  # Whether to enable plausible tracking
