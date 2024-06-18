@@ -71,6 +71,44 @@
 
 
 
+
+    
+        <link rel="preconnect" href="https://plausible.io">
+    <!-- Dev mode : We do not load plausible script to avoid bloating your stats -->
+
+<!-- If you are using Content-Security-Policy, do not forget to add this code to your CSP : 
+  script-src 'unsafe-inline' https://plausible.io
+  connect-src 'unsafe-inline' https://plausible.io
+  or just add the partial 'plausible_csp.html' to those 2 csp directives in your 'index.headers' file
+-->
+
+
+
+    
+    <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+    <script>
+         
+         
+         
+    </script>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
         <link rel="preconnect" href="https://plausible.io">
     <!-- Dev mode : We do not load plausible script to avoid bloating your stats -->
@@ -99,14 +137,13 @@
 <meta property="og:title" content="Generating docstrings with GPT" />
 <meta property="og:description" content="Generating Python docstrings with GPT and Emacs Motivation There is an open source library in which I&#39;m a maintainer. And recently I committed to creating docstrings for all the public functions and methods. I heard that recent Large Language Models (LLM) are good enough in the annotation of texts and documenting of code so I decided to try to use one of OpenAI models to solve this problem. In this post I will use Emacs plugins and extensions to generate docstrings but most advises about which prompt is better to use are generic and may be used with different code editors and IDE&#39;s." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="http://localhost:1313/ssinchenko/post/generating-docs-with-gpt/" />
-<meta property="og:image" content="http://localhost:1313/ssinchenko/images/avatar-favicon.png" />
-<meta property="article:section" content="post" />
+<meta property="og:url" content="http://localhost:1313/ssinchenko/post/generating-docs-with-gpt/" /><meta property="og:image" content="http://localhost:1313/ssinchenko/images/avatar-favicon.png"/><meta property="article:section" content="post" />
 <meta property="article:published_time" content="2023-04-06T14:11:05+02:00" />
 <meta property="article:modified_time" content="2023-04-06T14:11:05+02:00" />
 
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:image" content="http://localhost:1313/ssinchenko/images/avatar-favicon.png" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://localhost:1313/ssinchenko/images/avatar-favicon.png"/>
+
 <meta name="twitter:title" content="Generating docstrings with GPT"/>
 <meta name="twitter:description" content="Generating Python docstrings with GPT and Emacs Motivation There is an open source library in which I&#39;m a maintainer. And recently I committed to creating docstrings for all the public functions and methods. I heard that recent Large Language Models (LLM) are good enough in the annotation of texts and documenting of code so I decided to try to use one of OpenAI models to solve this problem. In this post I will use Emacs plugins and extensions to generate docstrings but most advises about which prompt is better to use are generic and may be used with different code editors and IDE&#39;s."/>
 
@@ -144,7 +181,7 @@
   "articleBody": " Generating Python docstrings with GPT and Emacs Motivation There is an open source library in which I'm a maintainer. And recently I committed to creating docstrings for all the public functions and methods. I heard that recent Large Language Models (LLM) are good enough in the annotation of texts and documenting of code so I decided to try to use one of OpenAI models to solve this problem. In this post I will use Emacs plugins and extensions to generate docstrings but most advises about which prompt is better to use are generic and may be used with different code editors and IDE's.\nSetup Eamcs and GPT If you are not a user of Emacs editor you can skip this block completely.\nSimilar plugins may be found for almost all the editors:\nVSCode Vim PyCharm Sublime Text Creating OpenAI account First, you must create an OpenAI account. You can do it on their website. You also need an API Token which you can generate in Personal -\u003e Manage account -\u003e API keys -\u003e +Create new secret token.\nConfigure Eamcs There is already an Emacs OpenAI organization that provide a low-level library openai and also a high-level interface codegpt. To provide API keys to the library add the following lines to your Emacs config file:\n(require 'openai) (setq openai-key \"sk-*************************************\") (setq openai-user \"user\") (setq openai--show-log t) So all that you need to do is to install these libraries.\nChoose a right prompt It may be important that by default codegpt library uses temperature=1.0. I tried also to use temperature=0.0 but it changed nothing.\nBy default codegpt library provide the function for generating documentation to any code:\n;;;###autoload (defun codegpt-doc (start end) \"Automatically write documentation for your code. This command is interactive region only, the START and END are boundaries of that region in buffer.\" (interactive \"r\") (codegpt--internal \"Please write the documentation for the following function.\" start end)) But this function is designed to generate documentation for any language. The problem with Python is it has three popular formats for generating docstrings: Google, NumPy, and Sphinx (or ReStructuredText). And the library for which I was trying to generate docstrings used sphinx format. So I created my own function to do it:\n;; CodeGPT custom prompts (defun codegpt-pysphinx (start end) (interactive \"r\") (codegpt--internal \"Please write the reStructuredText documentation for the following Python function in reStructuredText format.\" start end)) It is highly recommended to add as much as possible mentions of desired docstrings format. As you will see later even doubled directives to provide reStructuredText style docstrings are not enough and sometimes GPT returns something strange…\nDocstring for a simple function Let's try our approach on a very simple one-line function using text-davinchi-003 LLM:\nPlease write the reStructuredText documentation for the following Python function as a docstring in sphinx format. def column_to_list(df: DataFrame, col_name: str) -\u003e List[Any]: return [x[col_name] for x in df.select(col_name).collect()] \"\"\" column_to_list This functions takes a DataFrame and a column name as argument and returns a list of elements corresponding to the values in the column. :param df: A DataFrame. :type df: `DataFrame` :param col_name: Name of the column to be processed. :type col_name: `str` :return: List of elements. :rtype: `List[Any]` .. note:: This is an example of reStructuredText (reST) syntax. \"\"\" Here we have a good docstring but with a couple of problems:\nadditional line on the top; a very-very strange note which is also not supported by MKDocs generator; typo: functionS instead of function. But it can be easily done by just copying only required part of the text and fixing typos. The most important is that LLM recognize the context right and generate an exact description what this function is really do.\nDocstring for a big function For big complex functions, it works even worse. The first couple of tries returns me a picture like this one:\nExample of return in the wrong format So even two explicit directives to use reStructuredText and sphinx are not enough sometimes.\nAfter some retries with absolutely the same query I finally got what I desired:\n\"\"\" :param df: A :class:`~pyspark.sql.DataFrame` object to validate the schema against :param required_schema: A :class:`~pyspark.sql.types.StructType` expected schema to validate :type required_schema: StructType :param ignore_nullable: A boolean to determine if the nullable property should be ignored when validating :type ignore_nullable: bool, optional :returns: None Validate a DataFrame against required schema structure. This function will copy both the current DataFrame schema and the required schema structure and compare if the DataFrame schema contains all the expected fields of the required schema structure. If one of the fields is not found, a DataFrameMissingStructFieldError will be raised. If ignore_nullable is set to True, the function will ignor the nullable property of the two schemas for validation. \"\"\" There are some problems like a wrong order of parameters and description blocks or using of :class: tag which is not supported by MKDocs. But all of these can be easily fixed.\nSome funny things Sometimes LLM started to dream out of the blue. For example once it returns me docstrings with notes about changes in interface. The most interesting thing is that such a changelog looked very believable, despite being fictional from start to finish!\nA fictional changelog example, generated by LLM Conclusion LLM looks very promising in such a common task like as generating documentation for the existing code. But even simple docs requires a careful control from the human side. Anyway I will use it in my projects because it is significantly better than write documentation from scratch by yourself. I do not think that LLV models can replace software developers in the nearest feature but I think that they will change the whole process of development and will become as much an integral part of development as, for example, IDEs have become.\nP.S. I spend about 0.20 USD on LLM calls and about 30 minutes to setup all the configuration and generate all the docstrings. I'm absolutely sure that manual generation of docs would require significantly bigger amount of time!\n",
   "wordCount" : "1001",
   "inLanguage": "en",
-  "image": "http://localhost:1313/ssinchenko/images/avatar-favicon.png","datePublished": "2023-04-06T14:11:05+02:00",
+  "datePublished": "2023-04-06T14:11:05+02:00",
   "dateModified": "2023-04-06T14:11:05+02:00",
   "author":{
     "@type": "Person",
@@ -203,6 +240,8 @@
                         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                     </svg>
                 </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
             </div>
         </div>
         <ul id="menu">
@@ -557,8 +596,7 @@ P.S. I spend about 0.20 USD on <strong><strong>LLM</strong></strong> calls and a
     </main>
     
 <footer class="footer">
-        <span>&copy; 2024 <a href="http://localhost:1313/ssinchenko/">Sem Sinchenko</a></span> · 
-
+    <span>&copy; 2024 <a href="http://localhost:1313/ssinchenko/">Sem Sinchenko</a></span>
     <span>
         Powered by
         <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &

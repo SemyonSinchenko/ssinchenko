@@ -9,7 +9,7 @@
       <url>http://localhost:1313/ssinchenko/images/avatar-favicon.png</url>
       <link>http://localhost:1313/ssinchenko/images/avatar-favicon.png</link>
     </image>
-    <generator>Hugo -- 0.127.0</generator>
+    <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     <lastBuildDate>Mon, 04 Mar 2024 12:30:57 +0100</lastBuildDate>
     <atom:link href="http://localhost:1313/ssinchenko/tags/spark/index.xml" rel="self" type="application/rss+xml" />

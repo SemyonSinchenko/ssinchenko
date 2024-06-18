@@ -9,7 +9,7 @@
       <url>http://localhost:1313/ssinchenko/images/avatar-favicon.png</url>
       <link>http://localhost:1313/ssinchenko/images/avatar-favicon.png</link>
     </image>
-    <generator>Hugo -- 0.127.0</generator>
+    <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     <lastBuildDate>Thu, 12 Oct 2023 09:45:05 +0200</lastBuildDate>
     <atom:link href="http://localhost:1313/ssinchenko/categories/bikepacking/index.xml" rel="self" type="application/rss+xml" />
