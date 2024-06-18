@@ -119,3 +119,7 @@ About any questions related to this blog you can contact me via email: ssinchenk
 [params.plausible]
   enable = true  # Whether to enable plausible tracking
   domain = "semyonsinchenko.github.io/ssinchenko"  # Plausible "domain" name/id in your dashboard
+  outbound_link = true
+  file_downloads = true
+  debug = false
+  gitstar = false
