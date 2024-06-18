@@ -111,6 +111,11 @@ About any questions related to this blog you can contact me via email: ssinchenk
     name = "Categories"
     url = "categories"
     weight = 4
+
 [module]
     [[module.imports]]
         path = "github.com/divinerites/plausible-hugo"
+
+[params.plausible]
+  enable = true  # Whether to enable plausible tracking
+  domain = "semyonsinchenko.github.io/ssinchenko"  # Plausible "domain" name/id in your dashboard
