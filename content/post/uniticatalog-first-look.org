@@ -25,6 +25,10 @@ As a result, we have quite cheap cold storage that is very good for storing anyt
 
 * State of the art
 
+#+begin_quote
+/Unitycatalog is actually the first known solution to me that integrates both data and ML/AI assets into a single governance system. But this is only true for the proprietary version of Unity, which is only accessible in Databricks Runtimes. An open source version at the time of writing does not provide governance for ML models./
+#+end_quote
+
 I love Databricks for their open source focus. But sometimes their marketing can be very aggressive and confusing. For example, saying that Unitycatalog is the industry's first unified governance solution sounds kind of weird when Apache Ranger has been with us for a decade.
 
 #+begin_quote
