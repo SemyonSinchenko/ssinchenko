@@ -22,9 +22,9 @@ This blog post is a detailed story about how I ported a popular data quality fra
 
 The first part is a brief introduction to the domain: if you know what SparkConnect is and why libraries that rely on a low-level Apache Spark API are not compatible with it, you can skip it.
 
-The next part is a brief overview of the AWS Deequ Data Quality framework. How it works, why I think it is cool, and why I love it. I will also briefly mention the existing ~python-deequ~ wrapper and why I decided to make an alternative wrapper.
+The next part is a brief overview of the AWS Deequ Data Quality framework. How it works, why I think it is cool, and why I love it. I will also briefly mention the existing ~python-deequ~ wrapper and why I decided to make an alternative one.
 
-The main part is about defining the main proto-messages to be able to serialize the whole Deequ VerificationSuite. I will also show how to implement the corresponding Spark-Connect plugin.
+The main part is about defining the main proto-messages to be able to serialize the whole Deequ ~VerificationSuite~. I will also show how to implement the corresponding Spark-Connect plugin.
 
 At the end there will be my personal thoughts about the current state of the Spark-Connect ecosystem and how I'm starting to love it!
 
@@ -121,14 +121,11 @@ Majority of the Streaming API is supported, including DataStreamReader, DataStre
 _APIs such as SparkContext and RDD are deprecated in all Spark Connect versions._
 #+end_quote
 
-So if the library depends on the RDD API, you cannot just run it as is. Another problem is packages from the Apache Spark ecosystem that rely on ~py4j~ to create a PySpark binding to the Java/Scala library. I wrote [[https://semyonsinchenko.github.io/ssinchenko/post/how-databricks-14x-breaks-3dparty-compatibility/][a blog post]] about this where I found a lot of popular open source libraries that don't work in a Spark-Connect environment. It's a long story, but after that post, I had a meeting with [[https://github.com/grundprinzip][Martin Grund]] and he convinced me that using ~py4j~ was a bad idea from the start to begin with, and that library developers should start migrating to a native Spark-Connect plugin. The arguments for the native connect plugins are strong: you have to create ~protobuf~ messages once and it will work in any connect environment. And you are not relying on PySpark's non-public APIs like ~SparkSession._jvm~ in this case. in this case.
+So if the library depends on the RDD API, you cannot just run it as is. Another problem is the packages from the Apache Spark ecosystem that rely on ~py4j~ to create a PySpark binding to the Java/Scala library. I wrote [[https://semyonsinchenko.github.io/ssinchenko/post/how-databricks-14x-breaks-3dparty-compatibility/][a blog post]] about this where I found a lot of popular open source libraries that don't work in a Spark-Connect environment. It's a long story, but after that post, I had a meeting with [[https://github.com/grundprinzip][Martin Grund]] and he convinced me that using ~py4j~ was a bad idea from the start to begin with, and that library developers should start migrating to a native Spark-Connect plugins. The arguments for the native connect plugins are strong: you have to create ~protobuf~ messages once and it will work in any connect environment. And you are not relying on PySpark's non-public APIs like ~SparkSession._jvm~ in this case. in this case.
 
 And that is exactly the goal of my post: to make a good and well documented example, how an existing low-level Apache Spark library can be migrated to Spark-Connect ecosystem!
 
-
-
 #  LocalWords:  scalable Deequ protobuf
-
 
 ** AWS Deequ
 
@@ -144,9 +141,9 @@ AWS Deequ is a very popular (3.2k stars on GitHub) Data Quality framework.
 
 *** Why I'm thinking Deequ is so cool?
 
-While there are many "unified" data quality tools available today, I still find Deequ to be the best choice for Apache Spark workloads. Why is that? Well, there are a few reasons.
+While there are many "unified" and "multi-engine" data quality tools available today, I still find Deequ to be the best choice for Apache Spark workloads. Why is that? Well, there are a few reasons.
 
-Deequ is built natively for Apache Spark and with Apache Spark's native language ~Scala~. Instead of using a top level public APIs like Dataset / Dataframe API, Deequ does it better. One of the main concept of Deequ is ~Analyzer[S :< State[S], Metric[T]]~. It is not just a SQL query like ~count(when(col("x").isNotNull())~, because under the hood Deequ combines all states into a custom Accumulator and runs a custom Map-Reduce on the data. In most cases, this allows you to compute an unlimited number of metrics, including not only scalars (count of non-nulls, for example), but with any arbitrary ~State~ that can contain a lot of results.
+Deequ is built natively for Apache Spark and with Apache Spark's native language ~Scala~. Instead of using a top level public APIs like Dataset / Dataframe API, Deequ does it better. One of the main concept of Deequ is ~Analyzer[S :< State[S], Metric[T]]~. It is not just a SQL query like ~count(when(col("x").isNotNull())~, because under the hood Deequ combines all states into a custom Accumulator and runs a custom Map-Reduce on the data. Because of that approach Deequ can compute most of the required metrics in a single loop over the data. In most cases, this allows you to compute an unlimited number of metrics, including not only scalars (count of non-nulls, for example), but with any arbitrary ~State~ that can contain a lot of results.
 
 ~State~ in Deequ:
 
@@ -192,6 +189,8 @@ Another strong point of Deequ for me is that it is an engine to calculate metric
 I'm an engineer who works in ML/MLE team as a person who provides a data engineering support to brilliant minds: Data Scientists, people who know math and have Ph.D.'s. You can say that I'm not a data engineer but a MLOps engineer, but I absolutely agree with a statement that [[https://mlops.community/mlops-is-mostly-data-engineering/]["MLOps is 98% data engineering"]]. But working with ML/DS topics is a bit different from building a DWH. For example, I can see that most existing DQ tools do not provide something like anomaly detection (or relative constraints). For example, there is nothing like this in a popular DQ tool ~Great Expectations~. I do not know, maybe it is not necessary for DWH development. But for my tasks it is, and let me explain why.
 
 Let me first define a term "anomaly detection" as it is used in my post (and in Deequ concepts). Anomaly Detection is when we have not only static constraints, but also a relative constraint of how data is changing over time. For example, if I have data that contains customer transactions, it is hard to define reasonable static constraints for metrics like ~avg~ or ~median~. Simply because no one really knows. But what we can definitely define is allowed data drift. For example, if I know that inflation is below 10%, then I can say with confidence that this week's average spend should not vary from last week's average spend. I can define the boundaries, like ~+-10%~, and say that if the new batch of data does not fit within those boundaries, it is a very dangerous sign!
+
+~AnomalyDetectionStrategy~ trait in Deequ:
 
 #+begin_src scala
   /** Interface for all strategies that spot anomalies in a series of data points. */
@@ -244,9 +243,9 @@ Of course, you can just write a window function in SQL and compare all the batch
   }
 #+end_src
 
-Out of the box, Deequ provides implementations for ~MetricRepository~ in the form of an in-memory one, jsons in the arbitrary (supported by ~org.apache.hadoop.fs~) file system, and also in the form of the Spark table (which can be anything from CSV to Delta/Iceberg). You can also create your own implementation of the ~MetricRepository~ trait. For example, [[https://github.com/lexaneon/amazon-deequ-addons/tree/master][this repository]] provides an ~InfluxDB~ repository for Deequ. I'm sure that there are more of them.
+Out of the box, Deequ provides few implementations for ~MetricRepository~: in the form of an in-memory one, in the form of JSONs in the arbitrary (supported by ~org.apache.hadoop.fs~) file system, and also in the form of the Spark table (which can be anything from CSV to Delta/Iceberg). You can also create your own implementation of the ~MetricRepository~ trait. For example, [[https://github.com/lexaneon/amazon-deequ-addons/tree/master][this repository]] provides an ~InfluxDB~ implementation for Deequ. I'm sure that there are more of them.
 
-Finally, Deequ is a non-commercial library (there is nothing like an "open source" repository with an "enterprise branch"). It is a tool built and maintained by Amazon engineers for their own needs, as Deequ is tightly integrated with Glue Catalog. So with Deequ I can be sure that there won't be anything like "license change" or anything like that. It is a library made by engineers for engineers, not something made by marketing department for best sales. So, as you might understand, I love Deequ, so forgive me this little bias :D
+Finally, Deequ is a non-commercial library (there is nothing like an "open source" repository with an "enterprise branch"). It is a tool built and maintained by Amazon engineers for their own needs, as Deequ is tightly integrated with Glue Catalog. So with Deequ I can be sure that there won't be anything like "license change" or similar. It is a library made by engineers for engineers, not something made by marketing department for best sales. So, as you might understand, I love Deequ, so forgive me this little bias :D
 
 In the end, the goal of the post is to show an example of porting an existing ~Scala~ library to Spark-Connect and I just tried to explain why Deequ was chosen by me.
 
@@ -298,7 +297,7 @@ I understand that you are probably already tired of my impression of Deequ. But 
 The ~py4j~ problem. An existing Python Deequ wrapper relies on calls to private APIs of ~PySpark~. It starts by calling ~SparkSession._jvm~ to get access to JVM and call Scala classes directly from Python via Java bridge. And it is a problem: First of all, this approach does not work in ~PySpark Connect~ and there is no way to make it work except porting the whole ~py4j~ library to Spark-Connect. Another problem is that ~py4j~ is designed to work with Java code, not Scala. And sometimes it can be very hard to maintain bindings to Scala! It creates a big trade-off between maintainability of Python bindings and using the most advanced feature of Scala programming language.
 
 #+begin_quote
-*/NOTE:/* /If you want to have fun, try to imagine how to create an ~Option[Long]~ from a Python value ~100~ using ~py4j~. Spoiler:  ~scala.Option(java.lang.Long.valueOf(100))~ won't work. Because in the first step Python will call the expression in brackets. It will create a ~Long(100)~ in JVM, but after getting the result, ~py4j~ will do automatic unboxing of Java types into Python types and result in Python will be just ~100~. And the next step is call ~scala.Option(100)~: ~py4j~ will send ~100~ to the JVM and do automatic boxing of the value, but because ~100~ is less than ~java.lang.Integer.MAX_VALUE~, it will create a ~java.lang.Integer(100)~ in the JVM. So the result will be ~Option[Integer]~ instead of the desired ~Option[Long]~. And there are  many such corner cases. PyDeequ devs even created their [[https://github.com/awslabs/python-deequ/blob/master/pydeequ/scala_utils.py][own set of utilities]] to work with Scala from ~py4j~, but of course it cannot cover all cases./
+*/NOTE:/* /If you want to have fun, try to imagine how to create an ~Option[Long]~ from a Python value ~100~ using ~py4j~. Spoiler:  ~scala.Option(java.lang.Long.valueOf(100))~ won't work. Because in the first step Python will call the expression in brackets. It will create a ~Long(100)~ in JVM, but after getting the result, ~py4j~ will do automatic unboxing of Java types into Python types and result in Python will be just ~100~. And the next step is call ~scala.Option(100)~: ~py4j~ will send ~100~ to the JVM and do automatic boxing of the value, but because ~100~ is less than ~java.lang.Integer.MAX_VALUE~, it will create a ~java.lang.Integer(100)~ in the JVM. So the result will be ~Option[Integer]~ instead of the desired ~Option[Long]~. And there are many such corner cases. PyDeequ devs even created their [[https://github.com/awslabs/python-deequ/blob/master/pydeequ/scala_utils.py][own set of utilities]] to work with Scala from ~py4j~, but of course it cannot cover all cases./
 #+end_quote
 
 The lack-of-maintenance problem. If you go the [[https://github.com/awslabs/python-deequ/issues][issues page]] of the ~python-deequ~ project you may see that a typical gap between the support of the new version of the Apache Spark in the core Deequ and the support of that version in ~python-deequ~ may become months (or even years). I'm not that person who may come to the public open-source library and start arguing in the manner like I'm paying to devs and there is a service-level-agreement between us. By the end it is Open Source, no one have a duty there. _I'm just happy that engineers from Amazon decided to put their tool to Open Source and I have zero rights to require more!_ But what I can do is to try to make my own wrapper on top of a beautiful Deequ core using a modern Spark-Connect and protobuf approach!
@@ -354,7 +353,7 @@ I made a decision to make ~Analyzer~ object in the form of ~oneof~ that may cont
 #+end_src
 
 #+begin_quote
-*/NOTE:/* /To be honest I have a very limited experience with ~protobuf~, so I just made a decision do not invent a wheel and copy that "oneof-based" pattern of converting an API to proto messages from Apache Spark Connect code./
+*/NOTE:/* /To be honest I have a very limited experience with ~protobuf~, so I just made a decision to not invent a wheel and copy that "oneof-based" pattern of converting an API to protobuf messages from Apache Spark Connect code./
 #+end_quote
 
 Let's take one of analyzers as example to see how protobuf message is related to the Deequ case class signature:
@@ -379,7 +378,7 @@ And the message that I defined for that analyzer:
   }
 #+end_src
 
-As you may see it is almost 1to1 signature of the Deequ's case-class. One may say that it is not an easy task but I was able to cover about 90% of all the analyzers in Deequ in just \~230 lines of protobuf code. Anyway, if one wants to a ~py4j~ way it will require more even more code because of the pain with Scala ~Option~ and defaults that are hard to work with even from Java.
+As you may see it is almost 1to1 signature of the Deequ's case-class. One may say that it is not an easy task but I was able to cover about 90% of all the analyzers in Deequ in just about 230 lines of protobuf code. Anyway, if one wants to go a ~py4j~ way it will require even more code because of the pain with Scala ~Option~ and defaults that are hard to work with even from Java.
 
 For parsing protobuf messages into Deequ structures I used explicit pattern-matching in the following style:
 
@@ -447,7 +446,7 @@ Parsing of messages to Deequ is done in the same way like for analyzers:
 
 *** Check and VerificationSuite
 
-The first problem that I faced is that because Deequ is written in a true Scala way, instead of constraints it expects lambda expressions in form ~T => Bolean~ where ~T~ is the underlying value of the ~Metric~. For example, ~hasSize(_ == 5)~ means that Deequ should compute the value of metric for the analyzer ~Size~ and pass it the function ~x => x == 5~. And there is no obvious way to serialize Scala lambda expression from Python or Golang. So, I made a decision to use static constraints. My definition of ~Check~ in protobuf is the following:
+The first problem that I faced is that because Deequ is written in a true Scala way, instead of constraints it expects lambda expressions in form ~T => Bolean~ where ~T~ is the underlying value of the ~Metric~. For example, ~hasSize(_ == 5)~ means that Deequ should compute the value of metric for the analyzer ~Size~ and pass it the function ~x => x == 5~. And there is no obvious way to serialize Scala lambda expression from Python or Golang. So, I made a decision to use static constraints instead. My definition of ~Check~ in protobuf is the following:
 
 #+begin_src protobuf
   message Check {
@@ -476,17 +475,16 @@ The first problem that I faced is that because Deequ is written in a true Scala 
   }
 #+end_src
 
-This trick would be impossible if Deequ Scala library wasn't organized so cool. Because Deequ provides not only a human-friendly ~hasSize~ way to define constraints, but also by directly calling a ~def addConstraint(constraint: Constraint): Check~ method. This method expects a ~Constraint~ Deequ object, which is not intended to be used directly by users, but by library developers. And it is exactly the main case! Because Deequ allows to create ~Constraint~ from an ~Analyzer~ and ~Assertion~ (that is lamda expression). For example, this code snippet create a ~Size~ constraint:
+This trick would be impossible if Deequ Scala library wasn't organized so cool. Because Deequ provides not only a human-friendly ~hasSize~ way to define constraints, but also by directly calling a ~def addConstraint(constraint: Constraint): Check~ method. This method expects a ~Constraint~ Deequ object, which is not intended to be used directly by users, but by library developers. And it is exactly the mine case! Because Deequ allows to create ~Constraint~ from an ~Analyzer~ and ~Assertion~ (that is lamda expression). For example, the following code snippet create a ~Size~ constraint.
+
+Implementation of ~fromAnalyzer(...): Constraint~ for the ~Size~ analyzer in Deequ:
 
 #+begin_src scala
-  def sizeConstraint(
-    assertion: Long => Boolean,
-    where: Option[String] = None,
-    hint: Option[String] = None)
-  : Constraint = {
-    val size = Size(where)
+  def fromAnalyzer(size: Size, assertion: Long => Boolean, hint: Option[String]): Constraint = {
+    val constraint = AnalysisBasedConstraint[NumMatches, Double, Long](size,
+      assertion, Some(_.toLong), hint)
 
-    fromAnalyzer(size, assertion, hint)
+    new NamedConstraint(constraint, s"SizeConstraint($size)")
   }
 #+end_src
 
@@ -568,7 +566,7 @@ The final object that is actually sent to the Spark-Connect via gRPC is a messag
   }
 #+end_src
 
-The trickiest part is a ~optional byte data = 1;~. These ~bytes~ represent a serialized protobuf message that represents a Spark Connect ~relationship~. In theory, it would be much better to import ~spark/connect~ into the protobuf code from the dependency, but for some reason the generated code is not compilable. This is already an asterisked question, my current hypothesis is that the problem is in the Maven Shade plugin used in Spark-Connect. So all Spark-Connect messages implement not ~com.google.protobuf.GeneratedMessageV3~ but ~org.sparkproject.proto.GeneratedMessageV3~. These classes should be identical to a human, but not to a Java compiler. So, since this is not Python with a duck typing, I just introduced a workaround: I put a serialized protobuf message as a field of another protobuf message that is also serialized.
+The trickiest part is a ~optional byte data = 1;~. These ~bytes~ represent a serialized protobuf message that is a Spark Connect ~Relation~. In theory, it would be much better to import ~spark/connect~ into the protobuf code from the dependency, but for some reason the generated code is not compilable. This is already an asterisked question, my current hypothesis is that the problem is in the Maven Shade plugin used in Spark-Connect. So all Spark-Connect messages implement not ~com.google.protobuf.GeneratedMessageV3~ but ~org.sparkproject.proto.GeneratedMessageV3~. These classes should be identical to a human, but not to a Java compiler. So, since this is not Python with a duck typing, I just introduced a workaround: I put a serialized protobuf message as a field of another protobuf message that is also serialized.
 
 {{< figure src="/ssinchenko/images/tsumugi/deeper_meme.jpg" title="Putting serialized to bytes message into another message that will be serialized to bytes? We need to go deeper!" >}}
 
@@ -617,13 +615,13 @@ The plugin itself is less than 30 lines of code, so let me put it here as is:
   }
 #+end_src
 
-~DeequSuiteBuilder~ there is just one helper object that contains all those ~parseSign~, ~parseAnalyzer~, etc. methods that I mentioned in the section above.
+~DeequSuiteBuilder~ there is just a helper object that contains all those ~parseSign~, ~parseAnalyzer~, etc. methods that I mentioned in the previous section.
 
 Deequ ~VerificationResult~ object contains two main things:
 1. Results for checks;
 2. Computed metrics.
 
-Because the only thing I can send back from a ~RelationPlugin~ is a ~Relation~ (or a ~LogicalPlan~ in other words) I made a decision to avoid overengineering and just put both results in a form of JSONs into a ~DataFrame~ with a single column and two rows:
+Because the only structure I can send back from a ~RelationPlugin~ is a ~Relation~ (or a ~LogicalPlan~ in other words) I made a decision to avoid overengineering and just put both results in a form of JSONs into a ~DataFrame~ with a single column and two rows:
 
 #+begin_src scala
   val checkResults = VerificationResult.checkResultsAsJson(result)
@@ -646,7 +644,7 @@ And that is it! Our plugin is ready to use!
 
 *** Some nontrivial things
 
-I still think the implementations of the plugin system in Spark 3.5 are a little broken. The problem here is again in the Maven Shade plugin. So, based on the ~RelationPlugin~ code, it expects ~com.google.protobuf.Any~. But because the Spark compilation process itself replaces all ~com.google.protobuf~ patterns with ~org.sparkproject.proto~, if you define your plugin using only ~com.google.protobuf~ it will fail at runtime. This problem is already fixed in Spark 4.0, where the ~RelationPlugin~ expects ~bytes~ instead of the protobuf message. But if you want to make your plugin work with the current 3.5 version of Spark, just add the following to your ~pom.xml~ (Apache Maven is assumed):
+I still think the implementations of the plugin system in Spark 3.5 are a little broken. The problem here is again in the Maven Shade plugin. So, based on the ~RelationPlugin~ code, it expects ~com.google.protobuf.Any~. But because the Spark compilation process itself replaces all ~com.google.protobuf~ patterns with ~org.sparkproject.protobuf~, if you define your plugin using only ~com.google.protobuf~ it will fail at runtime. This problem is already fixed in Spark 4.0, where the ~RelationPlugin~ expects ~bytes~ instead of the protobuf message. But if you want to make your plugin work with the current 3.5 version of Spark, just add the following to your ~pom.xml~ (Apache Maven is assumed):
 
 #+begin_src xml
   <plugin>
@@ -700,7 +698,7 @@ Another important thing to note is that you must use exactly the same version of
 
 ** Generating of the Python API from messages
 
-Once you have a plugin and all the messages, the only thing left is to generate Python code from protobuf messages. I used a tool called [[https://github.com/bufbuild/buf][~buf~]] to do this. The same tool is used in Apache Spark and in Spark-Connect Go projects. I can assume that this tool is some kind of industry standard for generating multi-language bindings from protobuf messages. My ~bug.gen.yaml~ looks like this:
+Once you have a plugin and all the messages, the only thing left is to generate Python code from protobuf messages. I used a tool called [[https://github.com/bufbuild/buf][~buf~]] to do this. The same tool is used in Apache Spark and in Spark-Connect Go projects. I can assume that this tool is some kind of industry standard for generating multi-language bindings from protobuf messages. My ~buf.gen.yaml~ looks like this:
 
 #+begin_src yaml
   version: v2
@@ -811,14 +809,14 @@ The code-snippet below is reproducing the basic example from Deequ source code.
 
 You can see that I'm calling a plugin directly by extending the ~LogicalPlan~ class with my own. It may look ugly, but it is exactly the way it should be used. And of course such ugliness can be easily hidden under the hood by providing another thin API layer on top of the code generated by ~protoc~ and ~LogicalPlan~!
 
-In a couple of days I can even reimplement the exact API of the existing ~python-deequ~ project, if anyone is really interested.
+In a couple of days I can even re-implement the exact API of the existing ~python-deequ~ project, if anyone is really interested.
 
 *** Running an example
 
 At the moment Spark-Connect is not a part of the Apache Spark distribution that creates some complexity about how to run it.
 
 #+begin_quote
-/*NOTE:*/ /Based on the voting in a Apache Spark mailing list, Spark-Connect will become a part of Apache Spark distribution soon.
+/*NOTE:*/ /Based on the voting in a Apache Spark mailing list, it looks that Spark-Connect will become a part of Apache Spark distribution soon./
 #+end_quote
 
 To simplify testing I created a simple bash-script that run the Spark-Connect Server with all the plugins and Jars:
@@ -885,7 +883,7 @@ Running a Python example will produce something like this:
 
 * Bonus
 
-As you may have noticed, the same protobuf messages will work from any Spar-Connect implementation (Java, Scala, Go, Rust, C#). But what about Spark Classic? What if a developer needs to maintain both Classic and Connect? And I have good news. The same protobuf structures can be used to work from PySpark Classic! The only change is that instead of passing ~DataFrame~ as a serialised plan, you can pass it directly to ~DeequSuiteBuilder.protoToVerificationSuite(data: DataFrame, verificationSuite: proto.VerificationSuite): VerificationRunBuilder~!
+As you may have noticed, the same protobuf messages will work from any Spar-Connect implementation (Java, Scala, Go, Rust, C#). But what about Spark Classic? What if a developer needs to maintain both Classic and Connect? And I have good news. The same protobuf structures can be used to work from PySpark Classic! The only change is that instead of passing ~DataFrame~ as a serialized plan, you can pass it directly to ~DeequSuiteBuilder.protoToVerificationSuite(data: DataFrame, verificationSuite: proto.VerificationSuite): VerificationRunBuilder~ with Java-bridge!
 
 #+begin_src python
   spark: SparkSession = (
@@ -939,6 +937,6 @@ And we are getting the same result like for the Connect version! All that we nee
 
 /Did anyone actually scroll until that place? :D/
 
-All the mentioned code is placed in the repository "tsumugi-spark". I placed all my code into the [[https://github.com/SemyonSinchenko/tsumugi-spark/tree/initial-implementation][branch]] and there is an [[https://github.com/SemyonSinchenko/tsumugi-spark/pull/1][open Pull-Request]] from that branch to ~main~. If you are an engineer and want to thank me, you can of course star the repo, but it would be much better if you could give me feedback on my work directly in the open pull request!
+All the mentioned code is placed in the repository "tsumugi-spark". I placed all my code into the [[https://github.com/SemyonSinchenko/tsumugi-spark/tree/initial-implementation][branch]] and [[https://github.com/SemyonSinchenko/tsumugi-spark/pull/1][opened a Pull-Request]] from that branch to ~main~. If you are an engineer and want to thank me, you can of course star the repo, but it would be much better if you could give me feedback on my work directly in the open pull request!
 
 Thanks for reading this! I hope it was not too boring!
