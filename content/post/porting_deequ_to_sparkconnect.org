@@ -937,6 +937,6 @@ And we are getting the same result like for the Connect version! All that we nee
 
 /Did anyone actually scroll until that place? :D/
 
-All the mentioned code is placed in the repository "tsumugi-spark". I placed all my code into the [[https://github.com/SemyonSinchenko/tsumugi-spark/tree/initial-implementation][branch]] and [[https://github.com/SemyonSinchenko/tsumugi-spark/pull/1][opened a Pull-Request]] from that branch to ~main~. If you are an engineer and want to thank me, you can of course star the repo, but it would be much better if you could give me feedback on my work directly in the open pull request!
+All the mentioned code is placed in the repository "tsumugi-spark". I placed all my code into the [[https://github.com/SemyonSinchenko/tsumugi-spark][GitHub repository]] If you want to thank me for that post, you can star the repo!
 
 Thanks for reading this! I hope it was not too boring!
