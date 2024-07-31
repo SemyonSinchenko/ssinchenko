@@ -53,6 +53,11 @@ About any questions related to this blog you can contact me via email: ssinchenk
   url = "https://www.linkedin.com/in/semyon-a-sinchenko/"
 
 [[params.socialIcons]]
+  name = "mastodon"
+  title = "My Mastodon account"
+  url = "https://mastodon.social/@sems_s"
+
+[[params.socialIcons]]
   name = "pixelfed"
   title = "My Pixelfed with selected photos"
   url = "https://pixelfed.social/i/web/profile/391519829850111071"
