@@ -216,7 +216,7 @@ message CallObjectManipulationLogic {
 
 Let's go step by step.
 
-The first rows tels us to use `proto3` (`protobuf` version 3) syntax, which package is it, which java package is it, etc. There is no special magic, so, just use it as an example for your Spark proto code.
+The first rows tells us to use `proto3` (`protobuf` version 3) syntax, which package is it, which java package is it, etc. There is no special magic, so, just use it as an example for your Spark proto code.
 
 ```protobuf
 message CallCommandLikeLogic {
@@ -763,7 +763,7 @@ if __name__ == "__main__":
     print(java_like.to_string())
 ```
 
-#### Running SparConnect server
+#### Running SparkConnect server
 
 Now we need to do some manipulations in the folder where we cloned `spark`. For me it was `~/github/spark`. Or just do something like `cd $SPARK_HOME`.
 
