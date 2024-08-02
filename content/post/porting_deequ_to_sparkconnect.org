@@ -121,7 +121,7 @@ Majority of the Streaming API is supported, including DataStreamReader, DataStre
 _APIs such as SparkContext and RDD are deprecated in all Spark Connect versions._
 #+end_quote
 
-So if the library depends on the RDD API, you cannot just run it as is. Another problem is the packages from the Apache Spark ecosystem that rely on ~py4j~ to create a PySpark binding to the Java/Scala library. I wrote [[https://semyonsinchenko.github.io/ssinchenko/post/how-databricks-14x-breaks-3dparty-compatibility/][a blog post]] about this where I found a lot of popular open source libraries that don't work in a Spark-Connect environment. It's a long story, but after that post, I had a meeting with [[https://github.com/grundprinzip][Martin Grund]] and he convinced me that using ~py4j~ was a bad idea from the start to begin with, and that library developers should start migrating to a native Spark-Connect plugins. The arguments for the native connect plugins are strong: you have to create ~protobuf~ messages once and it will work in any connect environment. And you are not relying on PySpark's non-public APIs like ~SparkSession._jvm~ in this case. in this case.
+So if the library depends on the RDD API, you cannot just run it as is. Another problem is the packages from the Apache Spark ecosystem that rely on ~py4j~ to create a PySpark binding to the Java/Scala library. I wrote [[https://semyonsinchenko.github.io/ssinchenko/post/how-databricks-14x-breaks-3dparty-compatibility/][a blog post]] about this where I found a lot of popular open source libraries that don't work in a Spark-Connect environment. It's a long story, but after that post, I had a meeting with [[https://github.com/grundprinzip][Martin Grund]] and he convinced me that using ~py4j~ was a bad idea from the start to begin with, and that library developers should start migrating to a native Spark-Connect plugins. The arguments for the native connect plugins are strong: you have to create ~protobuf~ messages once and it will work in any connect environment. And you are not relying on PySpark's non-public APIs like ~SparkSession._jvm~ in this case.
 
 And that is exactly the goal of my post: to make a good and well documented example, how an existing low-level Apache Spark library can be migrated to Spark-Connect ecosystem!
 
@@ -256,8 +256,8 @@ The top level object in Deequ is a ~VerificationSuite~. But in 99% of cases you 
 ~VerificationSuite~ can contain the following:
 - A data that is ~org.apache.spark.sql.DataFrame~;
 - An optional sequence of ~Analyzer~ objects that should be run anyway to compute the required metrics. This is a case where you do not want to define constraints, but want to describe your data;
-- An optional sequence of ~Check~ obejcts that are actually a pair of ~Analyzer~ obejcts and a lambda function that takes a metric from the ~Analyzer~ and returns ~Boolean~;
-- An optional sequence of ~AnomalyDetection~ cases that are actually a combination of ~Analyzer~ and ~AnomayDetectionStrategy~;
+- An optional sequence of ~Check~ objects that are actually a pair of ~Analyzer~ objects and a lambda function that takes a metric from the ~Analyzer~ and returns ~Boolean~;
+- An optional sequence of ~AnomalyDetection~ cases that are actually a combination of ~Analyzer~ and ~AnomalyDetectionStrategy~;
 - An optional ~MetricReport~ and ~ResultKey~ that uniquely identify the data.
 
 Let's see on a minimal basic example from the Deequ repository:
@@ -883,7 +883,7 @@ Running a Python example will produce something like this:
 
 * Bonus
 
-As you may have noticed, the same protobuf messages will work from any Spar-Connect implementation (Java, Scala, Go, Rust, C#). But what about Spark Classic? What if a developer needs to maintain both Classic and Connect? And I have good news. The same protobuf structures can be used to work from PySpark Classic! The only change is that instead of passing ~DataFrame~ as a serialized plan, you can pass it directly to ~DeequSuiteBuilder.protoToVerificationSuite(data: DataFrame, verificationSuite: proto.VerificationSuite): VerificationRunBuilder~ with Java-bridge!
+As you may have noticed, the same protobuf messages will work from any Spark-Connect implementation (Java, Scala, Go, Rust, C#). But what about Spark Classic? What if a developer needs to maintain both Classic and Connect? And I have good news. The same protobuf structures can be used to work from PySpark Classic! The only change is that instead of passing ~DataFrame~ as a serialized plan, you can pass it directly to ~DeequSuiteBuilder.protoToVerificationSuite(data: DataFrame, verificationSuite: proto.VerificationSuite): VerificationRunBuilder~ with Java-bridge!
 
 #+begin_src python
   spark: SparkSession = (
