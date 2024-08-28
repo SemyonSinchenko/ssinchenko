@@ -1,0 +1,73 @@
+---
+title: "Generation H2O benchmark data using Rust and pyarrow"
+date: 2024-08-28T12:00:00+02:00
+draft: false
+categories:
+  - data-engineering
+tags:
+  - rust
+  - python
+  - pyarrow
+author: "Sem Sinchenko"
+cover:
+  image: "/ssinchenko/images/falsa/diagram.png"
+  summary: "This blog post is about how I tried Rust and Arrow/PyArrow for generating benchmark data. It was one of my first attempts in Rust but it was quite funny. I will try to explain the design, architecture and details of the implementation."
+---
+
+* Introduction
+
+** H2O db-like benchmark
+
+The [[https://jangorecki.gitlab.io/r-talks/2019-12-26_Mumbai_Efficiency-in-data-processing/Efficiency-in-data-processing.pdf][H2O db-like benchmark]] is a suite of benchmarks designed to evaluate the performance of various query engines, particularly those used in data analytics and business intelligence applications. The primary goal of this benchmark is to provide a comprehensive set of tests that mimic real-world workloads encountered in data-intensive environments.
+
+The H2O benchmark suite consists of several components:
+
+1. Data Generation: A data generation component that creates synthetic datasets with configurable sizes and characteristics, mimicking real-world data distributions and patterns;
+2. Query Workloads: A set of predefined query workloads that cover different types of queries, ranging from simple selections and aggregations to complex analytical queries involving window functions, recursive queries, and user-defined functions;
+3. Performance Metrics: A set of performance metrics that measure various aspects of query engine performance, such as query execution time, resource utilization (CPU, memory, disk I/O), and scalability with increasing data volumes and concurrency levels.
+
+The H2O db-like benchmark is designed to be vendor-neutral and can be used to evaluate a wide range of query engines, including SQL-based engines (e.g., PostgreSQL, MySQL, SQLite), NoSQL databases (e.g., MongoDB, Cassandra), and specialized analytical engines (e.g., Apache Spark, Presto, Dremio).
+
+After being abandoned by H2O, the benchmark repository [[https://duckdb.org/2023/04/14/h2oai.html][is now maintained]] by DuckDB Lab.
+
+** Data Generation in H2O db-like benchmark
+
+The data-generation in H2O is done by R-scripts and have some limitations.
+
+*** It is not so easy to run existing R-scripts
+
+Existing R-scripts were written in 2018 before the conference and weren't updated a lot from that time. There is not build-system, no dependency management, etc. Only two long scripts that one needs to be run via ~Rscript~:
+
+#+begin_src R
+  # Rscript groupby-datagen.R 1e7 1e2 0 0 ## 1e7 rows, 1e2 K, 0% NAs, random order
+  # Rscript groupby-datagen.R 1e8 1e1 5 1 ## 1e8 rows, 10 K, 5% NAs, sorted order
+  args = commandArgs(TRUE)
+#+end_src
+
+But if you would try to run the command from the top-level comment in the code you will fail:
+
+#+begin_src shell
+  Rscript groupby-datagen.R 1e7 1e2 0 0 ## 1e7 rows, 1e2 K, 0% NAs, random order
+  Error in library(data.table) : there is no package called ‘data.table’
+  Execution halted
+#+end_src
+
+It is not a very big problem but it may be annoying especially for people not familiar enough with CRAN-system of packages.
+
+*** All the synthetic data should be materialized into memory first
+
+An existing R-scripts were made in a very simple and straight-forward approach when we generate all the data in memory first and only after that we are writing it into CSV-file:
+
+#+begin_src R
+  DT = list()
+  DT[["id1"]] = sample(sprintf("id%03d",1:K), N, TRUE)      # large groups (char)
+  DT[["id2"]] = sample(sprintf("id%03d",1:K), N, TRUE)      # small groups (char)
+  DT[["id3"]] = sample(sprintf("id%010d",1:(N/K)), N, TRUE) # large groups (char)
+  DT[["id4"]] = sample(K, N, TRUE)                          # large groups (int)
+  DT[["id5"]] = sample(K, N, TRUE)                          # small groups (int)
+  DT[["id6"]] = sample(N/K, N, TRUE)                        # small groups (int)
+  DT[["v1"]] =  sample(5, N, TRUE)                          # int in range [1,5]
+  DT[["v2"]] =  sample(15, N, TRUE)                         # int in range [1,15]
+  DT[["v3"]] =  round(runif(N,max=100),6)                   # numeric e.g. 23.574912
+  setDT(DT)
+#+end_src
