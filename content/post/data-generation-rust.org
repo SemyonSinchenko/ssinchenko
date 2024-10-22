@@ -71,3 +71,5 @@ An existing R-scripts were made in a very simple and straight-forward approach w
   DT[["v3"]] =  round(runif(N,max=100),6)                   # numeric e.g. 23.574912
   setDT(DT)
 #+end_src
+
+The main problem is that it generates all the data first, materializes it, and only then writes the data to disk.
