@@ -1,0 +1,117 @@
+---
+title: "Why I think that Hive metastore is still unbeatable even by modern solutions like Unity or Polaris"
+date: 2024-10-22T17:00:00+02:00
+draft: false
+categories:
+  - data-engineering
+  - data-governance
+tags:
+  - unitycatalog
+author: "Sem Sinchenko"
+cover:
+  image: "https://hive.apache.org/images/hive.svg"
+summary: Open table formats like Apache Iceberg and Delta are evolving rapidly today. Developers worldwide are creating both open-source and proprietary custom formats for specific tasks such as data streaming, graph data, and embeddings. Additionally, we have numerous legacy and highly specific data sources, such as logs in custom formats or collections of old Excel files. This diversity is precisely why I believe that extensibility, or the ability to implement custom input and output formats, is crucial. Unfortunately, this feature, which is present in Hive Metastore, is missing in modern data catalogs like Unity or Polaris.
+---
+
+* Disclaimers
+
+In this blog post, I highlight what I perceive to be a problem with Unity Catalog, a product developed by Databricks. Although I am employed by a company that is a Databricks customer, the opinions expressed here are solely my own and do not reflect my employer's stance. I will reference the Apache GraphAr (incubating) project, where I am a PPMC member. However, the views presented in this post are entirely personal and do not represent the position of the GraphAr podling committee. While I question the design of certain open source projects in this post, I want to emphasize that I am not criticizing any individual open source developer or initiative. While I'm promoting Hive Metastore in this post, I'm not affiliated with the project in any way.
+
+
+* Why I think that extendability is so important?
+
+Let's begin with a brief overview of what I mean by extendability and why it is important from my perspective. I will use the Apache Spark project as an example to illustrate this concept.
+
+Apache Spark is currently a very popular project and is arguably the most widely used ETL tool and distributed engine overall. While there are already some alternatives available today, such as Apache Datafusion, Daft, Quokka, and others, I still frequently hear the opinion that "we would be happy to replace Spark, but any alternative lacks support for some specific data sources we rely on." In my understanding, this is a crucial feature.
+
+All the modern tools may be even several times faster than Apache Spark on benchmarks like TPC-H, but in real-life scenarios, people are building complex systems, not just running benchmarks. If a new, modern, fast distributed query engine doesn't provide support for a data source you need, you won't benefit from the fact that this tool is so fast or easy to configure.
+
+Apache Spark makes it remarkably simple. All you need to do is implement a couple of Java interfaces, known as the DataSourceV2 API. With the upcoming Spark 4.0, it will be even easier as it can be done in pure Python without involving the JVM. Today, we have Spark DataSource implementations for almost every conceivable source: text files, Excel spreadsheets, graph data, Redis cache, Kafka topics, and much more. Virtually anything is possible.
+
+For instance, have you heard of the Health Level Seven (HL7) format? I hadn't, but I discovered an implementation of a Spark DataSource for that format. What about Open Street Map data? There's a Spark connector for that too. Or consider the msgpack data source, for example.
+
+Here are some interesting implementations:
+- CERN ROOT I/O data: https://github.com/spark-root/laurelin
+- Open Street Map data: https://github.com/woltapp/spark-osm-datasource
+- msgpack data source: https://github.com/CybercentreCanada/spark-msgpack-datasource
+
+The versatility of Spark DataSource implementations truly covers an impressive range of data formats and sources.
+
+* HMS and modern data catalogs
+
+** Hive Meta Store (HMS)
+
+The Hive metastore is a critical component in the Hadoop ecosystem, serving as a central repository for metadata in Hive and other data processing frameworks. From a data catalog perspective, the Hive metastore can be viewed as an early predecessor to modern data catalogs. It provides a centralized location for storing and managing metadata about tables, columns, partitions, and other data assets within a Hadoop environment. Today, the Hive metastore's functionality extends beyond Hadoop, with cloud-managed versions available, such as AWS Glue.
+
+HMS (Hive Metastore Service) offers the capability to create, update, or delete both managed and external tables. It is primarily used to store schemas and metadata for data stored in open formats such as Apache Parquet or Apache Iceberg. Additionally, HMS provides some basic data governance functionality.
+
+** Unitycatalog
+
+Unity Catalog is an open-source data catalog donated to the Linux Foundation by Databricks and primarily maintained by Databricks developers. It is designed to be a unified solution for governing tables, ML models, volumes, and vector databases.
+
+{{< figure src="https://raw.githubusercontent.com/unitycatalog/unitycatalog/refs/heads/main/docs/assets/images/uc.png" alt="Unity Catalog" width="750px" >}}
+
+** Polaris Catalog
+
+Polaris is an open-source data catalog donated to the Apache Incubator by Snowflake, a cloud computing company. It is primarily maintained by developers from Snowflake. Polaris is designed to be a central component of the "multi-engine" stack, managing access to files in Apache Iceberg format as tables.
+
+{{< figure src="https://polaris.apache.org/img/overview.svg" alt="Polaris Catalog" width="750px" >}}
+
+* Extendability of catalogs
+
+** HMS
+
+One can easily add a custom format for the HMS by impementing two Java interfaces:
+
+- ~org.apache.hadoop.mapred.InputFormat~
+- ~org.apache.hadoop.mapred.OutputFormat~
+
+A good example can be found in the implementation of the [[https://github.com/awslabs/emr-dynamodb-connector][EMR DynamoDB Connector]]. By adding a single JAR file containing the implementation to the ClassPath, users can create, read, or delete tables in DynamoDB.
+
+#+begin_src sql
+CREATE EXTERNAL TABLE hive_tablename (
+    hive_column1_name column1_datatype,
+    hive_column2_name column2_datatype
+)
+STORED BY 'org.apache.hadoop.hive.dynamodb.DynamoDBStorageHandler'
+TBLPROPERTIES (
+    "dynamodb.table.name" = "dynamodb_tablename",
+    "dynamodb.column.mapping" =
+        "hive_column1_name:dynamodb_attribute1_name,hive_column2_name:dynamodb_attribute2_name",
+    "dynamodb.type.mapping" =
+        "hive_column1_name:dynamodb_attribute1_type_abbreviation",
+    "dynamodb.null.serialization" = "true"
+);
+#+end_src
+
+** Unity
+
+Currently, Unity Catalog is not extensible at all. All supported formats are implemented as part of the core functionality in a centralized repository. At present, there is no provision for any kind of extensions.
+
+** Polaris
+
+Polaris Catalog is specifically designed to function as an Apache Iceberg Catalog, and currently, there is no method available to extend its functionality.
+
+* Discussion
+
+Why I think that any modern data catalog that is pretending to replace HMS should be extendable? To answer this question let's mention couple of examples.
+
+** New Data Formats
+
+If a new data format emerges, the only way to add support for it to centralized solutions like Unity is to convince core maintainers of its importance. Anyone familiar with open source development understands that this is not an easy task. The reason is simple: anything pushed to the centralized repository must be maintained by core developers. 
+
+Imagine a super-catalog that supports all possible data formats and query engines. It becomes evident why such a catalog would be nearly impossible to maintain. Any change, addition, deletion, or bug fix would likely break one of the supported formats in combination with one of the supported query engines.
+
+As a maintainer of [[https://graphar.apache.org/][Apache GraphAr (incubating)]], an open format for storing large graphs in object stores or HDFS, I attempted to persuade Unity developers to add support for GraphAr to their Catalog. However, I was unsuccessful. I don't blame anyone for this outcome because, with my experience in open source, I understand that I would likely reject the addition of GraphAr if I were in the position of a Unity core developer. The reasoning is simple and obvious: as a maintainer of such a project, you focus on core functionality, and adding anything you're not sufficiently familiar with would only complicate your work.
+
+On the other hand, in a model of decentralized and extensible solutions like Hadoop MapReduce (HMS) with InputFormat and OutputFormat, or Apache Spark with DataSourceV2, any bug introduced by an upstream update would be fixed by maintainers of the custom Data Source, not by core developers. This approach distributes the maintenance burden and allows for greater flexibility in supporting various data formats. With such an approach, any developer of a storage format can maintain the catalog plugin in their own repository and has the flexibility to choose which catalog features to maintain. For example, they may opt not to maintain ACID properties but focus only on the features they need.
+
+** No way for closed-source formats
+
+What if I have my own closed-source or proprietary format? Let's consider a scenario where I have logs in a custom, stable binary format from the past. Can I register it in Hive? Yes, I can, by simply implementing a couple of interfaces. However, can I register it in a solution like Unity without disclosing the source code of the format? I don't believe that's possible.
+
+Another example: suppose I'm using both Databricks and Snowflake, and I want to read Snowflake tables from Databricks. I can do this because Spark is very easy to extend, and there's an implementation of the DataSourceV2 API for [[https://github.com/snowflakedb/spark-snowflake][Snowflake tables]]. But can I register this in the unified Unity Catalog? I don't think so.
+
+* Conclusion
+
+In this post, I attempted to compile my thoughts about today's data catalog landscape. While I see many impressive features in modern solutions like Unity, I still view them as very vendor-specific tools rather than the unified solutions they are promoted as being.
