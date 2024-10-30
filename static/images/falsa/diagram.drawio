@@ -1,0 +1,101 @@
+<mxfile host="Electron" modified="2024-08-24T15:59:09.515Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.6.4 Chrome/124.0.6367.207 Electron/30.0.6 Safari/537.36" etag="UXFhl6-IWeTTCGRDuXug" version="24.6.4" type="device">
+  <diagram name="Page-1" id="1GJd0UhJcCUczC_pC_9A">
+    <mxGraphModel dx="1434" dy="959" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="dBX0EwQuV8BaScckLt0n-1" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;CLI-args processing&lt;br&gt;(Python + Typer)&lt;/font&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="83.75" y="10" width="210" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-2" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;Validating args and creating an iterator&lt;/font&gt;&lt;div style=&quot;font-size: 18px;&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;(Python + PyArrow)&lt;/font&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="27.5" y="240" width="322.5" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-4" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;Native function that generates batch of PyArrowType&amp;lt;RecordBatch&amp;gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="350" width="340" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-5" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;Native function that generates batch of PyArrowType&amp;lt;RecordBatch&amp;gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="490" width="340" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-6" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;Native function that generates batch of PyArrowType&amp;lt;RecordBatch&amp;gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="630" width="340" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-7" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;.........&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="770" width="340" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-8" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;PyArrow write_batch(batch)&lt;/font&gt;" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="33.75" y="860" width="310" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-10" value="" style="endArrow=classic;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="dBX0EwQuV8BaScckLt0n-2" target="dBX0EwQuV8BaScckLt0n-4">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="450" as="sourcePoint" />
+            <mxPoint x="450" y="400" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="800" y="320" />
+              <mxPoint x="800" y="405" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-11" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="dBX0EwQuV8BaScckLt0n-2" target="dBX0EwQuV8BaScckLt0n-5">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="690" as="sourcePoint" />
+            <mxPoint x="450" y="640" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="800" y="320" />
+              <mxPoint x="800" y="545" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-12" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="dBX0EwQuV8BaScckLt0n-2" target="dBX0EwQuV8BaScckLt0n-6">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="690" as="sourcePoint" />
+            <mxPoint x="450" y="640" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="800" y="320" />
+              <mxPoint x="800" y="685" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-13" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="dBX0EwQuV8BaScckLt0n-2" target="dBX0EwQuV8BaScckLt0n-7">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="690" as="sourcePoint" />
+            <mxPoint x="450" y="640" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="800" y="320" />
+              <mxPoint x="800" y="825" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-14" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dBX0EwQuV8BaScckLt0n-4" target="dBX0EwQuV8BaScckLt0n-8">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="810" as="sourcePoint" />
+            <mxPoint x="450" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-17" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dBX0EwQuV8BaScckLt0n-5" target="dBX0EwQuV8BaScckLt0n-8">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="210" y="610" as="sourcePoint" />
+            <mxPoint x="260" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-18" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="dBX0EwQuV8BaScckLt0n-6">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="100" y="660" as="sourcePoint" />
+            <mxPoint x="190" y="860" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-19" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dBX0EwQuV8BaScckLt0n-7" target="dBX0EwQuV8BaScckLt0n-8">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="150" y="670" as="sourcePoint" />
+            <mxPoint x="200" y="620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dBX0EwQuV8BaScckLt0n-20" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dBX0EwQuV8BaScckLt0n-1" target="dBX0EwQuV8BaScckLt0n-2">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
