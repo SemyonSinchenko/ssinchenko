@@ -2,3 +2,5 @@ github.com/adityatelange/hugo-PaperMod v0.0.0-20240511144135-3f50861a0ced h1:DAn
 github.com/adityatelange/hugo-PaperMod v0.0.0-20240511144135-3f50861a0ced/go.mod h1:HCHxNMKYdGafUYjVV3ICiAqznZK2yH0iI53jqcDFDdQ=
 github.com/divinerites/plausible-hugo v1.19.6 h1:Ju9p0zCXUByYYOcwPIiX39a6hMTLIcTK3y9tBegRH5U=
 github.com/divinerites/plausible-hugo v1.19.6/go.mod h1:cxr+YB3FUwbLon8KCs4pV4Ankbkq6lJxTQUpNb5KqPo=
+github.com/divinerites/plausible-hugo v1.21.1 h1:ZTWwjhZ0PmLMacCVGlcGiYFEZW7VaYE767tchDskOug=
+github.com/divinerites/plausible-hugo v1.21.1/go.mod h1:cxr+YB3FUwbLon8KCs4pV4Ankbkq6lJxTQUpNb5KqPo=
