@@ -1,7 +1,7 @@
 baseurl = "https://semyonsinchenko.gihub.io/ssinchenko/"
 DefaultContentLanguage = "en"
 title = "Sem Sinchenko"
-theme = "PaperMod"
+theme = ["PaperMod", "plausible-hugo"]
 pygmentsStyle = "trac"
 pygmentsUseClasses = true
 pygmentsCodeFences = true

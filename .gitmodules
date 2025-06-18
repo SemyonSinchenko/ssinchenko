@@ -13,3 +13,7 @@
 [submodule "themes/PaperMod"]
 	path = themes/PaperMod
 	url = https://github.com/adityatelange/hugo-PaperMod.git
+[submodule "themes/plausible-hugo"]
+	path = themes/plausible-hugo
+	url = git@github.com:divinerites/plausible-hugo.git
+	branch = master
