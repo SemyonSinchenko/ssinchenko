@@ -24,6 +24,7 @@ staticDir = ["static"]
   ShowRssButtonInSectionTermList = true
   images = [ "images/avatar-favicon.png" ]
   params.mainSections = ["post"]
+  math = true
 
 [params.profileMode]
   enabled = false
@@ -128,3 +129,12 @@ About any questions related to this blog you can contact me via email: ssinchenk
   file_downloads = true
   debug = false
   gitstar = false
+
+[markup]
+    [markup.goldmark]
+        [markup.goldmark.extensions]
+        [markup.goldmark.extensions.passthrough]
+            enable = true
+            [markup.goldmark.extensions.passthrough.delimiters]
+                block = [['\[', '\]'], ['$$', '$$']]
+                inline = [['\(', '\)']]
