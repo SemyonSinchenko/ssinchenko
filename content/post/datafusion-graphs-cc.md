@@ -170,7 +170,7 @@ Next we are iteratively run two steps of MR, one is "small-star" and the second 
 
 ---
 
-I'm not going to put here the proof of the convergence of the algorithm as well as the proof of the complexity. I would like to mention only that the overall complexity is \( O(\log n^2) \) of Map-Reduce iterations.
+I'm not going to put here the proof of the convergence of the algorithm as well as the proof of the complexity. I would like to mention only that the overall complexity is \( O({\log}^2 n) \) of Map-Reduce iterations.
 
 #### Intuition
 
