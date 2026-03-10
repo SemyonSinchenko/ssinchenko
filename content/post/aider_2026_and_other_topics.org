@@ -1,0 +1,103 @@
+---
+title: "Why I (Still) Use Aider in 2026: Code Ownership, OpenSpec, and the Vibecoding Hype"
+date: 2026-03-10T14:00:00+02:00
+draft: false
+categories:
+  - ai
+tags:
+  - gpt
+author: "Sem Sinchenko"
+summary: In this blog post, I will share my thoughts on the current hype around "agentic coding" and why I still use Aider for human-in-the-loop pair programming in 2026. I will start with a top-level overview of the "vibecoding" trend and why generating thousands of lines of code with autonomous agents creates a massive code ownership crisis. Then, I will focus on the reality of maintaining existing OSS projects and why blind AI pull requests are a technical debt trap. Finally, I will explain why the industry needs a standardized approach to define boundaries for LLMs, and how reviewing structured formats like OpenSpec can be a better alternative to reviewing raw AI-generated code.
+---
+
+* The "Vibecoding" Hype vs. Engineering Reality
+
+Right now, everyone from every corner of the internet is screaming about the dawn of agentic coding. People are bragging about how they spin up 1,000 sub-agents and write something like a new ~gcc~ compiler over the weekend. Since everyone is writing about it, I decided it is time for me to share my thoughts too.
+
+To be honest, it is really cool. I tried it myself, and I liked it. Just a few days ago, I spent a weekend "vibecoding" a [[https://github.com/SemyonSinchenko/safetensors-spark][Spark DataSourceV2 for Safetensors]] from scratch. I used [[https://opencode.ai/][OpenCode]] paired with [[https://huggingface.co/moonshotai/Kimi-K2.5][Kimi K-2.5]] and [[https://github.com/Fission-AI/OpenSpec][OpenSpec]]. I chose OpenSpec because I knew exactly what, how, and where things should be implemented, and I needed a solid format for the spec. It was a great experience, really fun.
+
+But I have a big, big question here: is everyone around me writing new projects from scratch every single working day? And is everyone working entirely alone? I barely think so.
+
+If not, then I have another very big question: okay, we know how to generate thousands of lines of code in an hour, but what's next?
+
+Excuse me, but my personal experience is slightly different. I work with existing codebases. Take OSS as an example. I'm a core maintainer of [[https://github.com/graphframes/graphframes][GraphFrames]] and a few other projects. Yes, you frequently need to implement new features. But in 90% of my cases, these new features are encapsulated within a single file, well, maximum two. We are not generating massive repositories from zero every day.
+
+* The Review Nightmare and Code Ownership
+
+So, let's say I write 5,000 lines of code in two hours. I write a spec, launch OpenCode, and go watch an anime series. Great. But what is the person who has to review this PR supposed to do?
+
+I don't know about others, but working as a senior engineer for the last few years, I feel that I'm paid not for how much code I write. I am paid to "own" the code. In my understanding, code ownership means two simple things:
+- I know how this code is structured;
+- I understand what exactly is happening inside it.
+
+Previously, we had a perfect flow: you write the core parts yourself, you review the code from junior and middle engineers, and you understand how everything works under the hood. Now we have agents... Thousands of lines of code per hour.
+
+You can say, "just do the code review for agents as if they were juniors." But guys, juniors do not write code at such a speed! When juniors are not sure about something, they come and ask, and we discuss it. In the end, please show me an engineer who loves reading code more than writing it? When a PR with thousands of lines arrives, you have to spend an enormous amount of time just to dive in and read it.
+
+Or are we already prepared to blindly push all AI code to production and ignore what is under the hood? It is definitely an option. But guys, change my mind: this is just an old-school zero-coding!
+
+Undoubtedly, there is a niche for this on the market. But let's just stop for a second and remember: why didn't "dragging and dropping boxes" take over the software industry? Why did it remain a niche story? Because at some point, complexity hits you. It is not for nothing that people say "zero-coding is a technical debt". And not because there is no code there. Actually, the code is there, and you can often even export it to the version control system (Git). The debt is because nobody owns this code in the sense of understanding it. When something breaks down, you can't just go and efficiently fix it because you have no idea how it is structured under the hood. With autonomous agents, it is the same: when a bug appears, you just ask the AI to fix it, and it blindly adds another layer of duct tape over the existing mess.
+
+By the way, AI reviewers won't help here either, because it is the exact same story. A senior engineer owns the code, they are responsible for it. AI owns nothing and is responsible for nothing. AI is just a complex model that knows how to predict the next token based on the context.
+
+* Human-in-the-Loop: How to Keep the Boost Without Losing Ownership
+
+So, how do we keep this massive productivity boost from AI, but not lose our code ownership?
+
+This is exactly where [[https://aider.chat/][Aider]] (or [[https://cursor.com/home][Cursor]], whichever you prefer) bursts onto the scene. And I mean specifically /_human-in-the-loop pair programming_/, not "agentic coding." You often hear people saying that Claude Code killed Cursor, or that IDEs are no longer needed. I fundamentally disagree.
+
+What are the killer features of Aider for me?
+
++ **I stay in the context.** I am not watching anime in the background like I do with OpenCode. I write a prompt for a specific change. I manually provide the exact context for that change. I review the specific change with my own eyes, as a diff. And this diff is always small and strictly local. Aider is fundamentally designed to "slap patches" and support iterative development with a review at every single step. Let's be honest, my personal human "context window" is simply not large enough to digest the results of an hour of OpenCode or Claude Code "thinking" that dumps ~1,000 lines of changes on me. But a 20-30 line patch? I can easily handle that. *I am in the loop, I am engaged, I feel this code, and most importantly, I own it!*
++ *It is simply faster.* How often do you have a situation where you know exactly _what, where, and how to change_ the code? For me, it is very often. In OSS projects, I even try to maintain so-called "good first issues" where it is literally written step-by-step what to do and what to use as an example. It is a tool laser-focused on one single task. It has an internal system prompt of around ~5k tokens designed specifically to solve this one task correctly. And damn it, it really solves it well! When I know exactly what to do, I just point Aider to it. I don't have to wait for 10 sub-agents to spin up, or for a tool to scan half of the project. I get the result right there, in 99% of cases in less than 15 seconds, and I see the changes immediately.
++ *I don't lose my flow.* When I stare at a spinning loader in OpenCode for five minutes, I lose context and motivation... Remember that meme about what a 5-minute sync call does to an engineer's focus? It is exactly the same here. Maybe I have ADHD, but if I am focused, it physically irritates me to get distracted, switch context, or just sit and wait. I want to build things! With Aider (or IntelliJ IDEA's inline chat, for example), I don't drop out. The only difference is that now I don't type code, I type instructions. But I do it precisely and contextually.
++ *It is orders of magnitude cheaper.* In my personal experience, a full day of working with Aider burns about 1M tokens at most. Meanwhile, the same 1M tokens is burned in just a couple of hours in OpenCode (and it's the exact same story with Claude Code and others). It is just cheaper.
++ *Accuracy.* What I can say today looking at benchmarks is that _LLMs have learned to apply patches within a small context window with strict instructions almost perfectly_. Seriously, even Tier-3 models (Tier-1 being \simeq Opus 4.6, Tier-2 \simeq Sonnet 4.6, Tier-3 being something like [[https://huggingface.co/Qwen/Qwen3.5-397B-A17B][Qwen-3.5-plus]], [[https://huggingface.co/moonshotai/Kimi-K2.5][Kimi K-2.5]], or [[http://huggingface.co/deepseek-ai/DeepSeek-V3.2][DeepSeek v3.2]]) hit nearly 99% accuracy. My conclusion is that the main source of errors for vibecoding today is drifting context, an overly bloated scope, and execution flows that take too long. So why should I spin up an agent? If I can just open Aider, point exactly where, what, and how to change things, and get a perfect result? And even if I don't like the result, I can just type ~/undo~ and get a completely accurate result 5 seconds later?
+
+I truly believe that behind all this agentic hype about what someone vibecoded over the weekend, we missed a crucial milestone: LLMs already know how to solve problems perfectly on a small context window with the right instructions. So why abandon Aider? And in what universe did Claude Code "kill" Cursor?
+
+Now, don't get me wrong. I still use autonomous agents too. If it is a super new product, a completely standalone feature from scratch, or if I am facing a tedious, legacy issue that I would honestly *never* do myself (even with Aider) because of zero motivation -- agents are a lifesaver. But if I am working on mission-critical, existing code, my choice for now is strictly Aider.
+
+However, there is a catch. If I (or anyone else on the maintainer team) use an agent for those "boring" tasks, someone still has to review that massive PR. And I am absolutely not ready to review raw agentic code "as is" without a proper spec.
+
+* Stop Reviewing Code, Start Reviewing Specs
+
+So, the reality is that autonomous agents are here, and people *will* use them. When dealing with old issues or massive refactorings, we are essentially forced to choose between three evils: abandon the project entirely due to lack of time, accept blind "vibecoding" with zero code ownership, or find a systematic way to tame these agents.  I choose the third option and strongly advocate for it. But how do we do it? How can code reviewers survive this tsunami of AI-generated code, and how can developers still maintain ownership?
+
+I often hear people praising the ~/plan~ feature in Claude Code and how great it is that agents save their "reflections." Don't get me wrong, it is a really cool feature. It genuinely solves the "long loop" problem for the agent because having access to its own reasoning history helps the model make fewer mistakes. But let's be honest: this was built to help the agent, not to simplify the review process for humans.
+
+When everyone is bragging about their 1,000 sub-agents and their internal skills, I want to ask: guys, are you aware that a code reviewer doesn't see your agents or their skills? A reviewer just sees a massive wall of incomprehensible code. And even if they look at the ~/plan~ (if provided), it is often just 100s lines of unstructured "stream of consciousness" in a vendor-locked (Claude Code) format.
+
+And here I come to the following thought. **_If LLMs today are highly capable of solving problems correctly within the right context window, given the right inputs and boundaries, isn't it time we transition to reviewing those inputs and boundaries instead of the code itself?_**
+
+Getting interested in this, I discovered two projects: [[https://github.com/Fission-AI/OpenSpec][OpenSpec]] and [[https://github.com/github/spec-kit][GitHub SpecKit]]. I won't talk about SpecKit because, in my opinion, it is overcomplicated and too invasive. But OpenSpec... It seems we already have a tool-agnostic way and format to define constraints, context, and inputs for LLMs. So why isn't everyone talking about it instead of just hyping up vendor-locked agent plans?
+
+As a code reviewer, I want to see short, clear, and standardized formats like what OpenSpec [[https://github.com/Fission-AI/OpenSpec/blob/main/docs/opsx.md#the-user-experience][offers]] (~proposal.dm~ -> ~design.md~ -> ~spec.md~ -> ~tasks.md~). On top of that, OpenSpec conveniently archives these specs, meaning multiple developers can work simultaneously and in parallel on the project in different branches with different proposals, without suffering from painful merge conflicts later.
+
+By just skimming through 4 markdown files totaling maybe 300-400 lines, I can immediately understand what exactly is going on. More importantly, I can instantly spot where the constraints are defined poorly, or where the inputs leave way too much room for LLM hallucinations. Those are exactly the parts of the code I will need to review carefully.
+
+To be absolutely clear, _I am not calling to replace code review with spec review entirely_. I am just saying that a spec simplifies code review by an order of magnitude. That is why we urgently need a standardized format for the specs we are going to review. And of course, a spec does not cancel out the need for proper tests, linters, and CI checks. We just desperately need a way to "tame" this overwhelming flood of AI code. When anyone can generate thousands of lines in minutes, but we still expect a human engineer to review it, we have to adapt and change our approach.
+
+I truly don't understand why the whole industry isn't talking about OpenSpec right now. If we want to survive the era of agentic coding without drowning in technical debt, standardized specs are exactly what we need.
+
+* Putting Some Meat on the Bones: A Real-World Example with OpenSpec
+
+To add some real-world context to all these theoretical thoughts, let me show you how this actually works in practice. And yes, prepare for a bit of hypocrisy: this is the part where I will show you an example of how I do exactly what I was criticizing at the beginning of this post: spinning up agents to write code while I watch anime :)
+
+There is an old project called [[https://github.com/MrPowers/chispa][Chispa]]. It is an old library (made in 2019), the original creator hasn't maintained it for a long time, but it still gets around 2.5M downloads per month... Right now, I am trying to pitch the OpenSpec approach to the other maintainers. If we adopt the OpenSpec, I will be able to deliver new features and bug fixes using autonomous agents, and the reviewers will actually survive the process by relying on a few simple principles:
+
+- The spec is correct;
+- The constraints and boundaries are correctly defined in the spec;
+- The tests pass;
+- There are no regressions.
+
+So, what did I do? I took an open issue: one of the functions crashes on a specific and rare input. Nothing critical, just annoying. I had been trying to force myself to find the time and energy to fix it for ages, but I had exactly zero motivation. However, OpenSpec is a shiny new thing, and writing specs to spin up an agent didn't feel like a chore at all. I wrote the ~proposal.md~ 100% manually. I set up a yasnippet in Emacs for this some time ago, so it was actually a very easy and pleasant process. Then, I opened [[https://github.com/QwenLM/qwen-code][Qwen Code]] paired with ~qwen-3.5-plus~ and literally just mashed the ~/opsx-continue~ command. First, the agent generated a design.md. I skimmed it with my eyes, and it looked fine. It did the same for spec.md and tasks.md. Finally, I ran ~/opsx-apply~ and went to watch an episode of [[https://www.imdb.com/title/tt7222086/][Made in Abyss]]. When I came back, I simply ran ~pytest~ and ~pre-commit~, read the generated code diagonally just to be sure, and opened a PR.
+
+[[https://github.com/MrPowers/chispa/pull/172][Link to the Pull-Request]]
+
+And that is it. The code is fixed, the spec is readable, and I didn't lose my mind trying to find the motivation to write the code manually. 
+
+/Yes, I know what you might be thinking: generating four markdown spec files for a 100-line bug fix looks like a massive overhead. And honestly, it is. But it is always logical to start testing new workflows on something simple. Consider it a textbook example: the scope is small enough that any reviewer can easily open the PR, read the spec, check the code, and verify the tests, comparing everything side-by-side to see how this approach actually works in reality./
+
+I invite everyone to jump into the PR comments and criticize this approach with me! :)
+
