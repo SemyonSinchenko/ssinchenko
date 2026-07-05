@@ -1,0 +1,183 @@
+---
+title: "Algorithms on billion-scale graph using 10GB RAM: I love DataFusion!"
+date: 2026-07-05T10:00:00+02:00
+draft: false
+categories:
+  - graph-algorithms
+  - data-engineering
+tags:
+  - rust
+  - datafusion
+  - graphs
+  - connected-components
+author: "Sem Sinchenko"
+cover:
+  image: "/ssinchenko/images/Internet_map_1024.jpg"
+summary: "In a previous post, I was sceptical about using Apache DataFusion for graph analytics. However, after some thought and experimentation, I changed my mind. I have reconsidered my approach and now have a working implementation of basic graph algorithms, such as WCC, PageRank and MSSP. For example, I can identify weakly connected components in a graph with two billion edges using just 10 GB of RAM and two cores. This is one of the most widely used graph algorithms and lies behind most entity resolution. The pure CSR of this graph requires over 15 GB of raw memory (or 30 GB if it is treated as undirected, as WCC requires). The hard limit was 10 GB of RAM when using systemd-run -p MemoryMax=10G, and the process was successful. Not Vibe-coded."
+---
+
+* TLDR;
+
+I implemented a graph map-reduce using Apache DataFusion. Where possible, I offloaded everything to disk, and designed the algorithms to rely on bulk scans rather than random access. DataFusion handles spillover, sort-merge joins, aggregations, planning and execution, so my code is very lightweight. I tested it in strict mode by running it via ~systemd-run~ with a hard memory limit. It works. Of course, I have encountered some issues: for example, I frequently experience deadlocks from ~FairSpillPool~ in extreme scenarios, and I have not yet found a way to make SMJ use pre-sorting of the data on disk. But it works. I can compute PageRank on a directed graph with one billion edges (~graph500-26~ from the Graphalytics dataset) using 5 GB of memory. Alternatively, I can identify all the weakly connected components in a graph with two billion edges (~twitter_mpi~ from the same dataset collection) using 10 GB of memory.  Neither NetworkX nor Igraph can do this; most existing graph algorithms require the graph to fit into memory. Previously, I thought you needed Apache Spark and GraphFrames for billion-scale graph analytics. Now, however, I think all you need is a laptop. I have completely changed [[https://semyonsinchenko.github.io/ssinchenko/post/datafusion-graphs-cc/#principal-limitations][my old opinion]] about using Apache DataFusion for graph analytics.
+
+
+* Setup
+
+I tested two tasks.
+
+** PageRank
+
+[[https://en.wikipedia.org/wiki/PageRank][What is PageRank?]]
+
+
+The task is to compute PageRank on ~graph500-26~ from [[https://ldbcouncil.org/benchmarks/graphalytics/datasets/][Graphalytics dataset]]:
+
+| Key                  | Value         |
+|----------------------+---------------|
+| Num nodes            | 32,804,978    |
+| Num edges            | 1,051,922,853 |
+| Directed             | False         |
+| Memory Limit         | 5 GB          |
+| DataFusion Pool Size | 4 GB          |
+
+PageRank is one of the most popular graph centrality algorithm and is used from search results ranking to anti-fraud scoring. My DataFusion implementation is classical Pregel: bulk-synchronous parallel algorithm (aka Map-Reduce) which I expressed using joins and aggregate. Very similar to what is in the core of Spark's GraphFrames library.
+
+** Weakly Connected Components
+
+[[https://en.wikipedia.org/wiki/Weak_component][What are Weakly Components?]]
+
+
+The task is to identify all the weakly connected components on ~twitter_mpi~ from the same dataset:
+
+| Key                  | Value         |
+|----------------------+---------------|
+| Num nodes            | 52,579,682    |
+| Num edges            | 1,963,263,821 |
+| Directed             | True          |
+| Memory Limit         | 10 GB         |
+| DataFusion Pool Size | 8 GB          |
+
+WCC is the core part of any identity (entity) resolution problem. For example, when you need to do data deducplication from different system through transitive IDs you end up with WCC problem. My DataFusion implementation is based on the "In-database connected component analysis", Bögeholz et al., [[https://arxiv.org/abs/1802.09478][arXiv 1802.09478]]. I already implemented the same algorithm for the Spark's GraphFrames so it was an obvious choice.
+
+* Results
+
+** PageRank
+
+An easy part. I used SMJ just to proove the scalability but it is also possible to use HJ because vertices are small (32M) and PageRank state is trivial: one column ~rank~ (~f64~), one column ~out-degree~ (~i64~), on participation flag (~bool~). With HJ it is faster. PageRank works over directed edges so it deos not require to symmetrize the graph. Just offload edges to disk and iterate by updating state (and offload to disk as well to break the lineage) until converged.
+
+The compute time is long: around 30 minutes for 15 full iterations. But the setup is about memory, not speed. Give it some more realistic numbers for 1B graph analytics and it will work fast enough (I tested). I checked numbers against the ground truth: 100% match (with ~0.0001~ tolerance). A lot of optimizations can be done here as well: in theory it is possible to bucket edges by range or do kind of range-partitioing, so the SMJ does not need to sort again the biggest join-side (edges) on each iteration to get triplets. As well I'm not 100% parquet is the best choice here. Also would be interesting to try to fuse join+agg: each Pregel iterarion is like ~edges <-[join] nodes-state~ -> ~group by + agg~ -> ~[join] -> nodes-state~ -> ~update nodes-state~. If I can fuse together the first two stages it can be a huge win from the performance point of view. Meanwhile I do not know yet how to do it in DataFusion: a lot of thing to learn.
+
+** WCC
+
+The hardest part. 2B edges twitter graph is already huge (its edges are 30 GB in CSV !!!). But for WCC we need to symmetrize edges (or do a union between ~src, dst~ and ~dst AS src, src AS dst~ + ~distinct~ on top), so at the peak we are crunching almost 4 billion of edges using only 8GB DataFusion pool. After the flow survives the first few iteration, contraction process reduce the amount of edges dramtically and algorithm ends in 10 minutes with low memory pressure.
+
+#+begin_src bash
+sem@fedora:~/github/graphframes-rs$ systemd-run --user --scope \
+     -p MemoryMax=10G -p MemorySwapMax=0 \
+     -p AllowedCPUs=0-1 \
+     --setenv=RUST_LOG=graphframes_rs=info,datafusion=warn \
+     ./target/release/run-algorithm twitter_mpi-v.parquet twitter_mpi-e.parquet wcc 42 file:///var/home/sem/Downloads/gf_wcc_out 8G 2
+Running as unit: run-p316509-i284528.scope; invocation ID: 742f9296d31d426580b7ec8213422cf1
+[2026-07-05T05:37:21Z INFO  graphframes_rs::algorithm::connectivity::connected_components] start WCC with run-id 017c0a23-2b20-4ffa-ac6b-6e2cb8d7203e
+[2026-07-05T05:52:21Z INFO  graphframes_rs::algorithm::connectivity::connected_components] after preparation graph has 3228212374 edges
+[2026-07-05T06:13:21Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 1, edges remaining: 840238268
+[2026-07-05T06:17:39Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 2, edges remaining: 77322906
+[2026-07-05T06:17:57Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 3, edges remaining: 5624128
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 4, edges remaining: 1075998
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 5, edges remaining: 230838
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 6, edges remaining: 97940
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 7, edges remaining: 42352
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 8, edges remaining: 16720
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 9, edges remaining: 8238
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 10, edges remaining: 3860
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 11, edges remaining: 1488
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 12, edges remaining: 982
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 13, edges remaining: 514
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 14, edges remaining: 132
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 15, edges remaining: 120
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 16, edges remaining: 40
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 17, edges remaining: 18
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 18, edges remaining: 10
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 19, edges remaining: 6
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 20, edges remaining: 4
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 21, edges remaining: 2
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc forward iteration 22, edges remaining: 0
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=21
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=20
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=19
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=18
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=17
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=16
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=15
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=14
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=13
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=12
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=11
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=10
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=9
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=8
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=7
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=6
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=5
+[2026-07-05T06:17:59Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=4
+[2026-07-05T06:18:00Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=3
+[2026-07-05T06:18:01Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=2
+[2026-07-05T06:18:12Z INFO  graphframes_rs::algorithm::connectivity::connected_components] cc back propagation step t=1
+[2026-07-05T06:18:23Z INFO  graphframes_rs::algorithm::connectivity::connected_components] connected components written to file:///var/home/sem/Downloads/gf_wcc_out after 22 forward iterations
+num-iterations: 22
+#+end_src
+
+Results are correct: Graphalytics provides ground truth and it is easy to check:
+
+#+begin_src bash
+memory D SELECT column1, count(*) as cnt FROM read_csv('twitter_mpi-WCC', delim=' ') GROUP BY column1 ORDER BY cnt DESC LIMIT 5;
+┌──────────┬──────────┐
+│ column1  │   cnt    │
+│  int64   │  int64   │
+├──────────┼──────────┤
+│        1 │ 52515193 │
+│ 27052874 │       67 │
+│ 47269046 │       44 │
+│ 45352761 │       33 │
+│ 17516773 │       30 │
+└──────────┴──────────┘
+memory D SELECT component, count(*) as cnt FROM results  GROUP BY component ORDER BY cnt DESC LIMIT 5;
+┌───────────┬──────────┐
+│ component │   cnt    │
+│   int64   │  int64   │
+├───────────┼──────────┤
+│         1 │ 52515193 │
+│  27052874 │       67 │
+│  47269046 │       44 │
+│  45352761 │       33 │
+│  17516773 │       30 │
+└───────────┴──────────┘
+memory D 
+#+end_src
+
+* The code
+
+The code is here: https://github.com/SemyonSinchenko/graphframes-rs
+
+I wrote most of the code by myself, not "Claude do it, make no mistakes", so there is no README and code comments can be outdated somewhere. I'm learning Rust and DataFsuion on this project, so no LLM usage in core parts.
+
+Graph representation is almost like in Spark's GraphFrames:
+
+#+begin_src rust
+#[derive(Debug, Clone)]
+pub struct GraphFrame {
+    pub(crate) vertices: DataFrame,
+    pub(crate) edges: DataFrame,
+}
+#+end_src
+
+Core parts:
+
+1. Pregel main loop: [[https://github.com/SemyonSinchenko/graphframes-rs/blob/main/src/algorithm/pregel.rs][pregel.rs]]
+2. WCC implementation: [[https://github.com/SemyonSinchenko/graphframes-rs/blob/main/src/algorithm/connectivity/connected_components.rs][connected_components.rs]]
+
+To understand the Pregel notation this can be very useful source: [[https://web.stanford.edu/~rezab/classes/cme323/S15/notes/lec8.pdf][Lecture 8, CME 323: Distributed Algorithms and Optimization]]
+
+{{< figure src="/ssinchenko/images/pregel-viz.png" alt="The Pregel paradigm’s data flow model" width="400px" align="center" >}}
+
+An example of PageRank using the API: [[https://github.com/SemyonSinchenko/graphframes-rs/blob/main/src/algorithm/centrality/pagerank.rs][pagerank.rs]]
