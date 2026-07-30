@@ -1,0 +1,154 @@
+---
+title: "Why I Still Write Code By Hand And How AI Is Helping Me"
+date: 2026-07-30T12:00:00+02:00
+draft: false
+categories:
+  - ai
+tags:
+  - gpt
+author: "Sem Sinchenko"
+summary: "A SKILL.md that makes my harness write an onboarding ticket instead of code: what to change, where, and why instead of copy-pasteable diffs. Like the Learning Mode, but written for a senior engineer who already knows how to code. Implementing the guide by hand is what catches the architectural shortcuts that review misses."
+---
+
+* TLDR;
+
+This post is about a harness' skill (~SKILL.md~) I made for myself. I named the skill **guideme** and it works similarly to Claude's "Learning Mode" or existing study skills, except it is focused on guiding a senior engineer, not teaching a junior engineer. I designed it to work as if I, a senior engineer on a project, were creating an onboarding ticket to help a new senior engineer dive into the codebase. Instead of generating code or giving long, newbie-level lectures with explanations of concepts, my skill tries to provide a focused guide on what, where, and how to change, assuming the person working on implementation knows how to code. Additionally, my onboarding ticket generator provides a high-level overview of the architecture of the part of the codebase where changes should be made, along with an explanation.
+
+* Introduction
+
+** Architectural misalignment and shortest-path bias of AI
+
+From my experience working with AI and vibecoding projects, I've learned one important thing. AI almost always prefers to add new code rather than refactor existing code. This approach may be correct and prevent issues like "AI just purged my codebase." However, this approach introduces a new set of problems. For example, if an engineer asks AI to implement something new and misses a small detail, AI will just do it. It could add a copy part or a lot of if-else statements. But it will almost never say: this cannot be done cleanly without changing the interface.
+
+An experienced engineer would almost always realize the problem after starting to work on the implementation. They would realize that the task is not solvable well or that a small refactoring could achieve the goal almost for free. AI tends to prefer the short path but often misses the "big picture."
+
+At the same time, AI-generated code passes all the tests and looks correct, well-formatted, and well-documented, so catching such a thing in a review may be a non-trivial task.
+
+#+begin_quote
+/AI-generated code is typically well-formatted, syntactically clean, and properly commented -- qualities that make it appear higher quality during review. However, the issues that drive churn and turnover -- _architectural misalignment, unnecessary duplication, missing edge case handling_ -- are precisely the issues that are hardest to catch during review and easiest to overlook when the code looks polished on the surface./
+#+end_quote
+
+[[https://larridin.com/developer-productivity-hub/ai-coding-benchmarks-2026][Source]]
+
+** Code ownership
+
+You might call me a Luddite, but I still believe that code ownership matters. It looks like I'm not the only one who thinks so. I think senior engineers are paid not for the code they can write, but for owning the code. This means understanding how it works, the trade-offs, and the weak places. They are paid to understand the assumptions that were made. They are paid to understand top-level interfaces and contracts.
+
+I agreed with an [[https://karimjedda.com/engineering-management-after-cost-of-code-collapse/][assumption]]:
+
+#+begin_quote
+/The cost of producing plausible code has collapsed and it is not going back. Almost every claim beyond that is either unproven or wrong./
+
+- /That AI tooling has made engineering orgs dramatically faster: unproven./
+- /_That code review, documentation, and onboarding are obsolete: wrong._/
+- /That you can run the same roadmap with half the people: a bet, not a fact./
+#+end_quote
+
+As a code owner, if you do not understand the code, its contracts, interfaces, organization, etc., then I cannot imagine how you can properly review, explain, document, or onboard anyone to the code.
+
+While it is possible to fully own a vibecoded codebase in this sense, I still think that writing the code by hand, or at least doing so occasionally, is the most straightforward way to maintain ownership.
+
+** Emotional connecting with the code
+
+In the end I still love writing code. I work as an engineer, but my job is focused on productivity and achieving goals rather than code. So, I write a lot of code on my own time. I'm also trying to contribute to some open-source projects, and I have my own open-source projects. I wrote some of them line by line. Others I vibecoded for 100%. Some are a mix. I've found that if a project is fully vibecoded, I have almost no emotional connection to it. It works, or at least it looks like it works. In theory, I could improve it. But I don't want to do it. My vibecoded projects quickly enter "maintenance mode." At the same time, I want to go back to projects that I made by hand, line by line. I know the entire codebase, and I like reading some parts again from time to time because it reminds me of when I was sitting up at 4 a.m. trying to debug a line of code, even knowing that I had a daily Zoom meeting at 9:30 the next morning. I love my code. I'm proud of it. I want to go back to it. AI-generated code does not work the same way for me.
+
+I'm not sure if my behavior is normal. However, I have some biased observations. First, most of the engineers I asked expressed the same opinion or something very similar. Second, I see a lot of abandoned projects on GitHub that are 100% vibecoded. It's as if the project was made in a couple of days, and then there were zero commits for months. Of course, many handwritten projects were abandoned, but most of them were left for at least a few weeks, and more often, for months.
+
+** Learning
+
+Based on my experience learning new programming languages and technologies, the best approach is to do things by hand. For example, I'm currently learning Rust, and for me, watching 10 hours of educational videos does not replace 1 hour of manual coding, fighting with the borrow checker, and trying different approaches. The same is true for technologies. I still generally remember the idea of most of the algorithms I've implemented by hand over the years. Conversely, anything I read in books quickly disappears from my mind without practical application.
+
+Maybe the "rock star engineers" I follow have already solved the learning problem and know everything they need to. They can use AI 100% of the time by simply converting their experience into production-grade code. I'm not like that. I'm always learning new things, such as new technologies, algorithms, and programming languages. For this reason, among others I mentioned above, I cannot stop writing code by hand. I need to keep training my mental model. If I don't know how to do something at least in general terms, how can I properly instruct an AI tool to do it, and how can I validate and review the result?
+
+* Solution
+
+As I mentioned, writing the code by hand is the simplest way to maintain ownership. An experienced engineer working on a problem would always realize if it should be solved differently or if changes to the contract or interface are required. An engineer sees the big picture and won't solve a problem with the shortest-path approach of "let's just add more code and workarounds."
+
+At the same time, it would be foolish to reject the productivity boost from AI-driven development.
+
+#+begin_quote
+/Developers with Copilot completed the task _55.8%_ faster on average./
+#+end_quote
+
+[[https://larridin.com/developer-productivity-hub/ai-coding-benchmarks-2026][Source -- and this is the estimation from the bottom]]
+
+So, the perfect solution would be to find a way to maintain a setup in which I write a significant portion of the code myself while remaining close to AI-productivity. And it looks like I found the solution that works for me.
+
+** Idea: guidance and mentoring
+
+It was not enough to simply tell the AI what code to write because it did not achieve the aforementioned goals. I needed something different. One day, I thought, "OK, let's imagine I need someone to write code that I know how to write, and the goal is to onboard this person and teach them." Fortunately, I had mentoring experience in my career, helping engineers with their tasks. I also worked as a senior engineer, and I often had to onboard a new senior engineer to the codebase. I also have experience filling the so-called "good first issues" in open-source repositories. All these tasks are very similar to what I need to achieve with AI: providing guidance and instructions while allowing the person to learn and memorize.
+
+** Implementation: SKILL.md
+
+I wrote the skill for the harness that explicitly tell the harness to analyze the request and the code, to write a plan for its own but do not implement it:
+
+#+begin_src md
+- **MUST NOT** create, edit, or write production code, config, or tests. You investigate and explain only.
+- **MUST** read the actual codebase before writing the guide. Never guess at file names, function signatures, or call sites — locate them.
+- The reader is a senior engineer. Explain *architecture, intent, trade-offs, and non-obvious coupling*. **DO NOT** explain language syntax, standard library basics, or general programming concepts. The goal **IS NOT** guiding Junior developer, the gaol **IS** onboard the Senior engineer to the codebase.
+- Point to **specific anchors**: file path + function/class/block (and line range if stable). "Somewhere in the auth layer" is a failure.
+- When something is genuinely ambiguous, surface it as a decision for the human — do not silently pick.
+#+end_src
+
+I also explicitly added a requirements to provide a so called "mental model": miminal explanation of how it works today before changes.
+
+#+begin_src md
+## Mental model
+The minimum the reader needs about how this part of the system works today:
+the relevant flow, the convention to follow, the constraint that matters.
+Explain intent and trade-offs, not basics.
+#+end_src
+
+* Practice
+
+** The SKILL.md code
+
+The ~SKILL.md~ code is public and is free to use: [[https://github.com/SemyonSinchenko/sem-skills/tree/main][repository of my skills]].
+
+It should work with most harnesses. I personally tested it with Claude Code, OpenCode and Pi. It worked fine and exactly as I was expecting.
+
+** How it looks like
+
+This is the most recent usage example: I was working on improving the performance of my [[https://semyonsinchenko.github.io/ssinchenko/post/datafusion-graphs-cc-2/][new toy out-of-core graph algorithms implementation]]. After some tests and benchmarks I realized that K-Core logic should be rewritten from "collect_list" + "UDF" to a pure "UDAF" with partial aggregation. While I know what to do, I do not have enough experience with the Apache DataFsuion internal APIs and contracts. As well with Rust itself. I asked my harness (Pi + GLM-5.2) to guide me and it did it well:
+
+{{< figure src="/ssinchenko/images/guideme_skill/p1.png" width="750px" >}}
+
+{{< figure src="/ssinchenko/images/guideme_skill/p2.png" width="750px" >}}
+
+So, it looks like a guide with general direction, what to do and where. But wihout direct code blocks to copy-paste.
+
+And what is cool is when you start working on it, you will realize very fast the case of a bad decision or some additional contract you should (or should not) change anywhere. For example, take a look on this line:
+
+#+begin_src md
+- What: Build KCoreReduceAccumulator { counts: HashMap<i32, u32> } + KCoreReduce (AggregateUDFImpl). Concretely:
+     - Signature::exact(vec![DataType::Int64], Volatility::Immutable); return_type returns Int64.
+     - update_batch: downcast_int64(values[0], …) (reuse common::downcast_int64), for each value map[i32::try_from(v).map_err(..)?] = map.entry(k).or_insert(0) + 1 (or
+       *entry.or_insert(0) += 1).
+     - state() / merge_batch: copy se_map/de_map_and_insert but in the 8-byte (i32, u32) layout — with_capacity(4 + 8*n), write n.to_le_bytes() then (i32,u32).to_le_bytes()
+       per entry; de_map length-check 4 + 8*n, sum counts on merge (associative). Use common::as_binary_like for the state array (parquet round-trips Binary→BinaryView).
+     - state_fields: single Binary field named via format_state_name(args.name, "value") (identical to most_common_by L185) — this is the field the partial→final merge
+       reads; getting it wrong silently breaks multi-partition.
+     - evaluate(): empty → Int64(Some(0)); else sort distinct (key,count) by key descending, running cumulative cum, track best = max(best, min(key as i64, cum as i64));
+       return Int64(Some(best)).
+#+end_src
+
+The old implementation of the K-Core in my library stored the cores as ~Int64~ because, by design, I used the vertex degree as the initial core value, and the degree was the result of a ~count~ aggregation that returns ~Int64~. In this guide, the request harness generated a plan for reducing memory spill sizes. I did some math and found that ~HashMap<i32, u32>~ was sufficient because there are no real-world graphs where the degree of a single vertex exceeds ~i32::MAX~, or approximately two billion. However, since the task focused on changing the internal aggregation, the harness introduced a whole layer of conversions from ~i64~ to ~i32~! It didn't even suggest changing the core type to Int32 in the upstream algorithm that uses this aggregation. In my experience, harnesses rarely suggest anything beyond the scope of the task. In my daily work, we went even further after facing some problems when the AI messed up the code: we added explicit instructions not to change anything beyond the scope of the task!
+
+I noticed the problem immediately after starting to write the code follwing the guide. My though was:
+
+#+begin_quote
+/Wait, what the hell are we doing here? Why is the core even in i64 when we already capped it by i32::MAX?!/
+#+end_quote
+
+This is a small example, but it nicely illustrates what I'm talking about.
+
+** When to use it?
+
+I use it in the following scenarios:
+
+1. My own open-source projects, in which I'm learning something new and want to maintain an emotional connection to my code.
+2. My daily job as an engineer. I'm trying to complete at least 20% of my tasks this way to keep myself "inside" the codebase.
+
+* Afterword
+
+This tiny SKILL.md helped me a lot, so I hope it can be useful for someone else. Because I was surprised to not find anything like this by googling while the idea overall looks very obvious. To use it just take the SKILL.md from the [[https://github.com/SemyonSinchenko/sem-skills/blob/main/guideme/SKILL.md][repository]] and drop it to the skills folder of your harness.
