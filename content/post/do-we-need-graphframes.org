@@ -1,0 +1,130 @@
+---
+title: "Opinion: Spark GraphFrames probably should not be used in new projects."
+date: 2026-08-26T08:00:00+02:00
+draft: false
+categories:
+  - graph-algorithms
+  - data-engineering
+  - spark
+tags:
+  - rust
+  - datafusion
+  - graphs
+  - graphframes
+  - connected-components
+author: "Sem Sinchenko"
+cover:
+  image: "/ssinchenko/images/bsp_graph_bench/bench-combined.png"
+summary: GraphFrames is distributed graph algorithms using Apache Spark as a backend. I was always thinking about it like a project that closes the gap between in-memory graph tools (IGraph, NetworkKit) and complex distributed systems (GraphScope). The niche of graph problems from a few billion edges to a hundred billion edges. Now I think this gap can be closed by single-node out-of-core graph processing and using Apache Spark for graph algorithms can be explained only by specific infrastructure reasons, not uniqueness or performance. GraphFrames is slow and greedy for resources at problems of almost all the scales.
+---
+
+* Disclaimer
+
+While I'm the top-1 committer at GraphFrames, this post is 100% my personal opinion. I'm not speaking on behalf of the project, only on behalf of myself. While I have my own project that I will reference as "DataFusion based", I'm not selling anything and my personal project is a) non-commercial b) experimental. When I say I don't believe Spark GraphFrames is needed, I'm not meaning I will stop contributing or participate in maintenance of the project. As always in my blog all the opinions are my own and very opinionated.
+
+_*There is no maintainer consensus that GraphFrames should be retired. Some maintainers may disagree with both my analysis and my conclusions. I publish this as my personal technical assessment and an invitation to discuss the project's future, not as a project decision or roadmap announcement.*_
+
+* Preface
+
+1. *This is not "Java vs Rust".* My opinion about "JVM is inheritly slow for BigData" [[https://semyonsinchenko.github.io/ssinchenko/post/jvm-tax/][is public and clear]]: I see this as a bad marketing of some vendors and systems, not as a fact.
+2. *I'm open to counter arguments* and I would like to invite to the open discussion anyone who see the status of GraphFrames in a different way.
+
+* Body
+
+First of all, I love GraphFrames. I learned a lot from its codebase. GraphFrames and Apache Spark GraphX is a brilliant implementation of graph algorithms in terms of relational algebra. I spent two years [[https://semyonsinchenko.github.io/ssinchenko/post/a-year-in-graphframes/][contributing to GraphFrames project]]. My recent [[https://semyonsinchenko.github.io/ssinchenko/post/datafusion-graphs-cc-2/][DataFusion based project]] I will compare GraphFrames with took most of its inspiration from GraphFrames and GraphX and is based on my attempts to make GraphFrames better and faster. Meanwhile recently I lost my belief in the GraphFrames. Not because it become slower, buggy or hard to maintain, but because it looks to me there is no niche where GraphFrames makes any sense. I would not recommend to use GraphFrames for new projects without clear understanding that it will be slow and resources greedy compared to alternative solutions.
+
+/*NOTE:* Infrastructure reason like "our data is already in Spark" make sense for GraphFrames but it does not change my conclusion. I always saw the GraphFrames as a project with unique niche where it is irreplacable. After experimenting with single-node algorithms I found that problems in the niche can be solved better using less amount of resources./
+
+Let's say we have three different categories of the graph algorithms problem. Small sized graphs, fit into the RAM. Up to a few billion edges. NetworkKit, IGraph and friends are shining here: fast, accurate, feature rich and the conversion of the data to CSR-format does not take much time. Medium sized graphs: bigger than RAM already but still not big enough or not important enough to make sense in a standalone infrastructure and copy the data to the specialized graph processing system. Up to a hundred billion edges I would say. And big sized graphs: any case when you already want a separate infrastructure (GraphScope and friends) for graph processing.
+
+The case of the medium sized graphs was always a niche for GraphFrames. When data is big to fit into the adequate server like 128-256 GiB of RAM. When the graph algorithm call is only a part of the bigger data transformation pipeline and keeping a separate copy of the data for graph needs does not make sense. For example, an entity resolution pipeline when company do fingerprinting over billions of rows and need to run weakly connected components (WCC) as part of it. Or marketing machine learning when computing pagerank or clustering is a part of the broader features generation pipeline. Or an anti-fraud offline pre-scoring of the financial transactions data, when the graph part is a small piece of broader analysis even if the graph is big enough already.
+
+At least I thought so. In my recent experiments I found how algorithms on the billion scale graphs can be run using a very limited amount of memory and a fast NVM disk. Recently I did a benchmark to understand how fast my DataFusion implementation is compared to Apache Spark GraphFrames. I also added a CSR-based engine (its name doesn't matter for this post). Results I see as very bad for GraphFrames: it is very slow on XS-scale while my DataFusion implementation is on par with CSR where the time of conversion of the tabular data to sparse rows dominates. GraphFrames is very slow on S-M scales, from 10 to 40 times slower than my DataFusion version. GraphFrames fails with OOM or goes infinite at M+ scale (few billion of edges) on my setup while my single-node out-of-core tool gives good results in the area when CSR failing with OOM.
+
+One may say GraphFrames is a mature project that cannot be replaced by your single-developer experimental implementation and I won't argue about it. It just doesn't matter. It should not be ultimately my tool that replace GraphFrames in its niche. The conclusion for me is that GraphFrames is just not needed and does not make sense at almost any problem it was supposed to be the best on. Maybe its time for the project maintainers to discuss whether GraphFrames should gradually move into maintenance mode.
+
+/P.S. Of course GraphFrames does not become archive right now. The only conclusion I can add is I personally would not recommend to use Spark GraphFrames for new projects except for some specific infrastructure reasons and with full understanding that it will be slow and expensive. There are better ways to do what GraphFrames was supposed to do./
+
+/P.P.S. There are some additional problems that make GraphFrames senseless from my point of view. The Apache Spark ecosystem is moving to Spark Connect. Its not clear if it's good or bad, but for the 3d-party project like GraphFrames, it's hard to extend Apache Spark at a lower level than regular SQL. I've spent a lot of time adding Spark Connect Protocol support to GraphFrames, but none of it is needed. Most "Managed Apache Spark" versions like Databricks or AWS are almost closed for any 3d-party extensions like GraphFrames. This is another reason I think the project lost its own niche./
+
+* Appendix: Benchmark
+
+I chose three different graph problems: Pagerank, Weakly Connected Components, Label Propagation.
+
+{{< figure src="/ssinchenko/images/bsp_graph_bench/bench-combined.png" alt="Benchmark results" width="750px" title="Spark GraphFrames vs one CSR-based framework vs DataFusion BSP implementation" align="center" >}}
+
+As one may see, GraphFrames is about 10 times slower than CSR-based approach (including building CSR time) at low scale. GraphFrames is 8-40 times slower than DataFusion-based Bulk-Synchronous-Parallel (BSP) approach at medium scale. GraphFrames can't outperform CSR at bigger scale and fails with OOM, while DataFusion-based implementation can process graphs in out-of-core mode. These are only three graphs and 3 algorithms but I actually did more tests. For example, on the WCC problem and graphs with 15B of edges GraphFrames requires a huge (few TBs of total RAM and a few hundred of cores) cluster and around 65 minutes while DataFusion-based implementation can do the same work on a single node with 32 cores and 244 GB RAM in 30 minutes.
+
+
+** Setup
+
+*** Compute
+
+I run all the tests on a single AWS =i3.xlarge= that I choose because of a fast local NVM.
+
+| vCPUs                 |                                 4 |
+| Memory (GiB)          |                              30.5 |
+| Memory per vCPU (GiB) |                              7.63 |
+| Physical Processor    | Intel Xeon E5-2686 v4 (Broadwell) |
+| Clock Speed (GHz)     |                           2.3 GHz |
+| CPU Architecture      |                            x86_64 |
+| NVME Drive            |                              true |
+| Disk Space (GiB)      |                               950 |
+
+While it may look like a "small" server, I'm a sole unpaid open source enthusiast and I cannot throw few hundred dollars on AWS bill just for fun. I did a lot of tests, I run small scaled problem using the scoped by [[https://semyonsinchenko.github.io/ssinchenko/post/datafusion-graphs-cc-2/][=systemd=]] amount of resources. I analyzed the growth. It scales ~linear: you can multiply all the numbers by 2-3, use 2-3 times bigger datasets and get comparable results. One may say that single-node is a worsen case for Apache Spark but keep in mind that on a distributed scenario of multiple small nodes Spark won't be faster than on a big single node. That means you can scale Apache Spark (and GraphFrames) horizontally, but to process a few billion edges graph GraphFrames need a cluster of 3-4 =i3.xlarge=. While the single-node library can do the same faster on one instance. So, GraphFrames is loosing here by both compute cost and performance anyway. This is exactly what my benchmark shows. My previous view of irreplacability of GraphFrames in the 1-100 billion edges graph processing was based only on the fact I did not know a fast but flexible single-node implementation outside of pure academic tools like =graph-chi=.
+
+
+*** Problems
+
+I used three graphs from [[https://ldbcouncil.org/benchmarks/graphalytics/datasets/][LDBC collection]]:
+
+| Dataset         | Nodes      | Edges         | Category (by LDBC) | Size, GB (non-compressed) |
+|-----------------+------------+---------------+--------------------+---------------------------|
+| cit-Patents     | 3,774,768  | 16,518,947    | XS                 | ~290 MB                   |
+| graph500-24     | 8,870,942  | 260,379,520   | M                  | ~4.3 GB                   |
+| datagen-sf3k-fb | 33,484,375 | 2,912,009,743 | XL                 | ~97.5 GB                  |
+
+All the problems were estimated from reading parquet files (aka tables) of edges and nodes to writing a parquet file (table) with results. The reason is simple: I'm interested in end-to-end real world performance, not in raw number crunching. Real world data like user sessions for entity resolution and fingerprinting, or financial transactions for AML use cases are stored not as Compressed Sparse Rows (CSR) but as tables in the Data Warehouse System. If a tool requires an expensive transformation to build an internal optimized representation of the graph to run algorithms faster, the transformation time should be included, not excluded. This is my opinionated benchmark, not an official LDBC challenge. If one wants different results they can create different benchmark.
+
+
+** CSR
+
+For CSR-based library the time of import data from tables to CSR-format is dominated. DuckDB was used to sort edges and create pointers table. I did not write all of this by myself but used a tool bundled to one of the graph algorithms library. During building of the in-memory optimized CSR structure there is around x2 memory consumption due to a need to keep two copies. While in theory the matrix for the =graph500-24= should be ~4GB of raw RAM, the reality was different. Even after building the in-memory graph and releasing the second copy, RSS was kept at around 14GB of consumed memory. For the 1B scale graphs this approach requires a bigger VPS to survive, something around =64GB= RAM instance like =i3.2xlarge= or even bigger. My guess is that it won't survive on a 30GB RAM VPS even if I pre-convert the data to CSR format on a bigger instance.
+
+I should note that after converting the data to CSR, algorithms are blazingly fast. If the pipeline contains at least 3 different algorithm calls on the same graph it makes sense to spend resources and pre-convert the graph somehow because the total wall time will win.
+
+
+** GraphFrames
+
+*** Pagerank
+
+In Spark GraphFrames it is one of the few last algorithms backed only by Apache Spark GraphX. It is not efficient and uses a lot of memory. It barely works in out-of-core scenarios when memory exceeds available resources. It is possible to build a better version with DataFrame API, but it is complicated due to the outdated pagerank contract that can't be fixed without breaking compatibility.
+
+*** WCC
+
+In Spark GraphFrames I used a non-default algorithm "randomized_contraction":
+
+/Bögeholz, Harald, Michael Brand, and Radu-Alexandru Todor. "In-database connected component analysis." 2020 IEEE 36th International Conference on Data Engineering (ICDE). IEEE, 2020./
+
+It is based on a paper from 2020 instead of the default "two_phase" which is based on the paper from 2014. This algorithm is about 2-times faster at scale than the default one and the only reason it is not default is because GraphFrames is a 10 years old project and back-compatibility is a top priority for maintainers.
+
+/*NOTE:* Working on my new DataFusion-based toy I found two possible optimizations compared to the algorithm from the original paper. The symmetrization of edges and an expensive distinct operation can be skipped if one fuse the choosing of representative with symmetrization via bidirectional messages. The port of this optimizations to Spark GraphFrames [[https://github.com/graphframes/graphframes/pull/888][is open]]. But even if it gives the GraphFrames x2 performance boost I saw in DataFusion, it won't change a lot and GraphFrames will be still far beyond my DataFusion based implementation./
+
+*** CDLP
+
+A *hard* case for Pregel-based implementation (both Spark GraphFrames and a DataFusion based tool). The aggregation is =mode= that requires to collect all the messages without partial aggregation at all (big memory pressure) or try to aggregate on the fly facing huge serialization-deserialization overhead of =HashMap='s.
+
+** DataFusion based implementation
+
+It is a reimplementation of GraphFrames/GraphX concept of "graph algorithms in terms of relational algebra" on top of the Apache DataFusion query engine. The same BSP concept of syncronous shared nothing algorithms implemented in terms of operations on relations and driver holds only the control loop. Out-of-core is achieved by combination of tuned sort-merge-join, DataFusion spilling and manual parquet checkpointing of everything. All the algorithms are out-of-core not only in terms of =|E|= but in terms of =V= as well: they will work even the vertex state cannot fit to the RAM. Scalable up to local disks limit.
+
+
+It consumes a lot of disk during run. For example, running of WCC on a three billion edges graph resulted in a peak disk consumption around 100GB (both checkpoints and DataFusion spills).
+
+{{< figure src="/ssinchenko/images/bsp_graph_bench/disk.png" alt="Disk consumption of DataFusion (both checkpoints and spills) during the WCC run at a 3B edges graph" width="750px" title="Disk consumption of DataFusion (both checkpoints and spills) during the WCC run at a 3B edges graph" align="center" >}}
+
+At the same time fast local disks are relatively cheap today compared to RAM prices and a disk for a few TB is something very easy to get.
+
+** Source code
+
+For my DataFusion based solution [[https://github.com/SemyonSinchenko/graphframes-rs/tree/main/benches/results][all the results are public]] with the code. Setup for GraphFrames is [[https://github.com/SemyonSinchenko/graphframes-rs/blob/763ac3ae9b884957eb9f2408e21cf3b1639c8483/benches/python/main_graphframe.py][public as well]]. Feel free to reach me about any problem with the setup.
