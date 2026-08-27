@@ -1,0 +1,268 @@
+---
+title: "KMeans Clustering in Apache DataFusion"
+date: 2026-08-27T10:00:00+02:00
+draft: false
+categories:
+  - data-engineering
+  - datafusion
+tags:
+  - rust
+  - datafusion
+author: "Sem Sinchenko"
+cover:
+  image: "/ssinchenko/images/kmeans/cluster_4_100k.png"
+summary: Blogpost about an implementation of KMeans clustering algorithm using Apache DataFusion DataFrame APIs and operations on relations.
+---
+
+* TLDR;
+
+I implemented KMeans clustering algorithm using Apache DataFusion. I took inspiration from the Apache Spark MLLib KMeans, but I replaced =mapPartitions= by =data.aggregate= with a custom User Defined Aggregation Function (UDAF). The result is a fast implementation that works in out-of-core mode. It can handle features that don't fit into RAM. On top of the Spark's implementation, I added support for fitting multiple =K= values in one run. All K values share feature scans. More details below.
+
+* References
+
+- /Lloyd, Stuart. "Least squares quantization in PCM." IEEE transactions on information theory 28.2 (1982): 129-137./
+- /Arthur, David, and Sergei Vassilvitskii. "k-means++: The advantages of careful seeding." Soda. Vol. 7. 2007./
+- /Meng, Xiangrui, et al. "Mllib: Machine learning in apache spark." Journal of Machine Learning Research 17.34 (2016): 1-7./
+- [[https://github.com/apache/spark/blob/master/mllib/src/main/scala/org/apache/spark/mllib/clustering/KMeans.scala][/Apache Spark MLLib codebase./]]
+
+
+* Demo
+
+I was needed KMeans for the implementation of Power Iteration Clustering in my [[https://github.com/SemyonSinchenko/graphframes-rs][project about out-of-core graph algorithms]] I'm working on ([[https://semyonsinchenko.github.io/ssinchenko/post/datafusion-graphs-cc-2/][1]], [[https://semyonsinchenko.github.io/ssinchenko/post/do-we-need-graphframes/][2]]), so it is a part of my library. To demonstrate how it works I will use =scikit-learn= and =IPython=:
+
+#+begin_src python
+  # %%
+  from sklearn.datasets import make_blobs
+  import matplotlib.pyplot as plt
+
+  import pyarrow as pa
+  import pyarrow.parquet as pq
+  import numpy as np
+
+  # %%
+  n = 100_000
+  blobs = make_blobs(n_samples=n, n_features=2, centers=4, cluster_std=0.4)
+  xx = blobs[0]
+
+  # %%
+  f = plt.figure(figsize=(10, 10))
+  ax = f.add_subplot()
+  ax.scatter(xx[:, 0], xx[:, 1])
+  ax.grid()
+
+  # %%
+#+end_src
+
+{{< figure src="/ssinchenko/images/kmeans/cluster_4_100k_raw.png" alt="Raw points" width="750px" align="center" >}}
+
+#+begin_src python
+  # %%
+  idx = pa.array(range(xx.shape[0]))
+  features = pa.array(xx.astype(np.float32).tolist(), type=pa.list_(pa.float32()))
+  tt = pa.Table.from_arrays([idx, features], ["id", "features"])
+
+  # %%
+  pq.write_table(tt, "blobs.parquet")
+
+  # %%
+  !graphframes mllib kmeans \
+    --vertices blobs.parquet \
+    --output file:///var/home/sem/github/notebooks/blobs_clustered.parquet \
+    --feature-col features \
+    --k 4 \
+    --seed 42
+
+  # %%
+  rr = pq.read_table("blobs_clustered.parquet").sort_by("id")
+
+  # %%
+  f = plt.figure(figsize=(10, 10))
+  ax = f.add_subplot()
+  ax.scatter(xx[:, 0], xx[:, 1], c=rr["cluster_4"].to_numpy())
+  ax.grid()
+
+  # %%
+#+end_src
+
+{{< figure src="/ssinchenko/images/kmeans/cluster_4_100k.png" alt="Clustered points" width="750px" align="center" >}}
+
+* Implementation
+
+First, I would like to praise the Apache Spark MLlib and its developers. It is a brilliant piece of software — an engineering masterpiece, if you will. The more I dive into its codebase, the more confident I am in my conclusion. My implementation of K-means, especially the initialization process, is heavily inspired by Spark's implementation.
+
+** General Idea
+
+Let's assume we have a table with data in the following format:
+
+1. =id= column, let's say =in64= but it can be any kind of unique ID
+2. =feature= column, a dense vector of the size =d= filled by =f32= values
+
+Our goal is to find =K= clusters. See [[https://en.wikipedia.org/wiki/K-means_clustering][Wikipedia]] for more details.
+
+Long story short, we need to:
+
+1. Initialise =K= "centers": vectors of the same size =d=
+2. For each point in the data, we need to find the nearest center based on distance between =features= and center
+3. We need to recompute the vector of each center as an average of all the points for that this center is the nearest
+
+Continue this until convergence.
+
+{{< figure src="/ssinchenko/images/kmeans/k-means_convergence.gif" alt="Animation of the KMeans convergence" width="550px" title="KMeans iterations animation." align="center" >}}
+
+** SQL-like implementation
+
+Let's imagine we have an aggregate function (UDAF) that is paremetrized by the "centers" and for each point in data compute the distance to all the centers, choose the closest one and update this cluster sum of coridnates and count of points in it. Then we can express one iteration of KMeans in the form like this:
+
+#+begin_src sql
+  SELECT r.sums, r.counts FROM
+  (SELECT kmeans_iteratio(features, centers) AS r FROM dataset GROUP BY 1);
+#+end_src
+
+Or in DataFusion DataFrame API:
+
+#+begin_src rust
+  let expr = kmeans_step_expr(col("features"), k, d, centers.clone());
+  let batches = features.clone().aggregate(vec![], vec![expr])?.collect().await?;
+  let sums = batches[0]
+               .column(0)
+               .as_any()
+               .downcast_ref::<FixedSizeListArray>()
+               .ok_or_else(|| {
+                    datafusion::common::DataFusionError::Execution(
+                        "k-means step result must be a FixedSizeList".to_string(),
+                    )
+                })?;
+  let cnts = batches[0]
+               .columns(1)
+               .as_any()
+               .downcast_ref::<Float64Array>()
+               .expect("k_means_step returns Float64");
+  // for each value we should update centers by dividing
+  // each value from sums by the value from cnts <...>
+#+end_src
+
+/*NOTE:* As one may already see, if the dataset is a table or parquet file, the peak memory usage of one iteration is =O(|K*d|)= that does not depend on amount of data in the table. DataFusion will read batches one by one, compute distances, update state and free the memory for the next batch. The only thing that is store in mmeory is the state: =k= vectors for sums and =k= double values for counts. This is out-of-core implementation by design opposite to one from =scikit-learn= that requires to have all the data in memory./ 
+
+** Distance Metrics and SIMD fun
+
+That was the first time in my live I wrote manual SIMD kernels and I can say it was fun! I used a [[https://github.com/Lokathor/wide][=wide= crate]] for it. The =L2= distance kernel is like this:
+
+#+begin_src rust
+  pub(crate) fn l2_distance(x: &[f32], c: &[f32], d: usize) -> f32 {
+    let mut acc = f32x8::splat(0.0);
+    let mut t = 0;
+    while t + 8 <= d {
+        let xv = f32x8::from(&x[t..t + 8]);
+        let cv = f32x8::from(&c[t..t + 8]);
+        acc = (xv - cv).mul_add(xv - cv, acc);
+        t += 8;
+    }
+
+    let mut dist = acc.reduce_add();
+
+    while t < d {
+        let xi = x[t];
+        let ci = c[t];
+        dist += (xi - ci) * (xi - ci);
+        t += 1;
+    }
+
+    dist
+  }
+#+end_src
+
+A "classical" approach: 8 lines, SIMD body and a non SIMD tail for last elements. Because for KMeans we need to find the nearest center, scale does not matter and we can compare squared L2 because square root is monotonic function.
+
+** DataFusion Accumulator
+
+For expressions like =df.aggregate(vec![], vec![expr])= DataFusion falls back to the =Accumulator= so it does not make any sense to implement =GroupsAccumulator=.
+
+What we should keep inside:
+
+- current centers
+- dimension (size of "features")
+- =k=
+- metric (if we want to support not only L2)
+- sums
+- counts
+
+For performance reason I put both sums and counts into one long vector: first =k*d= are sums, last =k= are counts.
+
+#+begin_src rust
+  #[derive(Debug)]
+  pub(crate) struct KMeansStepAccumulator {
+      k: usize,
+      d: usize,
+      centers: Vec<f32>,
+      state: Vec<f64>,
+      metric: DistanceMetric,
+  }
+#+end_src
+
+Update batch is trivial: scan rows, for each row call the SIMD-kernel.
+
+#+begin_src rust
+  fn update_batch(&mut self, values: &[ArrayRef]) -> Result<()> {
+    debug_assert_eq!(values[0].null_count(), 0usize);
+    let v = as_f32_list_like(&values[0], "k_means_step", "first")?;
+
+    // no nulls are assumed in feature (embeddings)
+    for i in 0..v.len() {
+      let vv = v.value(i);
+      let (cluster, _) = nearest_centers(vv, &self.centers, self.k, self.d, self.metric);
+      self.state[self.k * self.d + cluster] += 1.0f64;
+
+      for t in 0..self.d {
+        self.state[cluster * self.d + t] += vv[t] as f64;
+      }
+    }
+
+    Ok(())
+  }
+#+end_src
+
+For merging two batches it is enough to serialize only the =state= field and pass it as an arrow's =List=.
+
+#+begin_src rust
+  fn merge_batch(&mut self, states: &[ArrayRef]) -> Result<()> {
+    let s = as_f64_list_like(&states[0], "k_means_step", "state")?;
+
+    let n = self.k * self.d + self.k;
+    // non-nulls semantic by contract
+    for i in 0..s.len() {
+      let ss = s.value(i);
+      for t in 0..n {
+        self.state[t] += ss[t];
+      }
+    }
+
+    Ok(())
+  }
+#+end_src
+
+Most of other code is a pure DataFusion machinery.
+
+** Initialization
+
+It is long. More than 250 lines of code. I would better [[https://github.com/SemyonSinchenko/graphframes-rs/blob/main/src/ml/kmeans.rs#L284C1-L503C1][leave the link to the source]]. Long story short, it is almost direct port of the Scala code from the Spark MLLib.
+
+** Improvement compared to Spark MLLib
+
+One of the the main problem of KMeans algorithm is to choose the =K=. [[https://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_silhouette_analysis.html#sphx-glr-auto-examples-cluster-plot-kmeans-silhouette-analysis-py][scikit-learn]] documentation recommends to fit multiple =K= and choose the right one by metrics like silhouette coefficients.
+
+Working on my implementation I realized that the most expensive part of the algorithm is scan and aggregation while the number crunching in kernels is just around 30% of all the work. As well I noticed that the expensive scan and aggregate can be shared along multiple =K= using the same UDAF in a way like this:
+
+#+begin_src sql
+  SELECT r1.sums, r1.counts, r2.sums, r2.counts, ... FROM
+  (SELECT
+    kmeans_iteratio(features, centers1, k1) AS r1,
+    kmeans_iteratio(features, centers2, k2) AS r2,
+    ...
+    FROM dataset GROUP BY 1);
+#+end_src
+
+This feature is already in my code.
+
+** Performance
+
+As any out-of-core implementation, this one will be always slower than the in-memory one like in =scikit-learn=. At the same time the overall performance is not so bad. I tested it as a part of Power Iteration Clustering on graph with 8M nodes that means KMeans was called on a dataset with 8M vectors of size 19. Wall time was few seconds with a hard limit on DataFusion memory pool 4GB.
